@@ -1,0 +1,49 @@
+import PIL
+
+from torch.utils.data import Dataset
+import torchvision.transforms as t
+import pandas as pd
+
+
+class SceneDataset(Dataset):
+
+    def __init__(self, data_path, csv_name, transforms=None):
+        super(Dataset, self).__init__()
+
+        self.path_to_csv = csv_name
+        self.data_path = data_path
+
+        if transforms is None:
+            self._set_default_transforms()
+        else:
+            self.transforms = transforms
+
+        self.df = pd.read_csv(data_path / csv_name)
+
+    def __getitem__(self, idx):
+        path = self.data_path / self.df['path'][idx]
+        image = self._load_img_to_tensor(path, self.transforms)
+        label = self.df['class_enum'][idx]
+        data = {'image': image,
+                'label': label
+                }
+        return data
+
+    def __len__(self):
+        return len(self.df)
+
+    def _set_default_transforms(self):
+        std = (0.229, 0.224, 0.225)
+        mean = (0.485, 0.456, 0.406)
+        size = (256, 256)
+        transforms = t.Compose([t.Resize(size=size),
+                                t.ToTensor(),
+                                t.Normalize(mean=mean, std=std)]
+                               )
+        self.transforms = transforms
+
+    @staticmethod
+    def _load_img_to_tensor(path, transforms):
+        pil_image = PIL.Image.open(path).convert('RGB')
+        tensor_image = transforms(pil_image)
+        return tensor_image
