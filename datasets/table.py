@@ -42,6 +42,9 @@ class SceneDataset(Dataset):
                                )
         self.transforms = transforms
 
+    def get_num_classes(self):
+        return len(set(self.df['class_enum']))
+
     @staticmethod
     def _load_img_to_tensor(path, transforms):
         pil_image = PIL.Image.open(path).convert('RGB')
