@@ -31,7 +31,7 @@ class Trainer:
     def train_epoch(self):
         loader = DataLoader(dataset=self.train_set,
                             shuffle=True,
-                            batch_size=32
+                            batch_size=192
                             )
 
         self.classifier.model.train()
@@ -49,7 +49,7 @@ class Trainer:
     def test(self):
         loader = DataLoader(dataset=self.test_set,
                             shuffle=False,
-                            batch_size=32
+                            batch_size=192
                             )
 
         n_samples = len(loader.dataset)
