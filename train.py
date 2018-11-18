@@ -17,14 +17,14 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--path_to_tables', dest='tables_dir', type=Path)
     parser.add_argument('-d', '--device', dest='device', type=torch.device, default='cuda:0')
     parser.add_argument('-a', '--architecture', dest='arch', type=str, default='resnet18')
-    parser.add_argument('-e', '--n_epoch', dest='n_epoch', type=int, default=3)
+    parser.add_argument('-e', '--n_epoch', dest='n_epoch', type=int, default=100)
     parser.add_argument('-f', '--test_freq', dest='test_freq', type=int, default=1)
     args = parser.parse_args()
 
     device = args.device if torch.cuda.is_available() else torch.device('cpu')
 
-    train_set = SceneDataset(data_path=args.data_path, csv_path=args.tables_dir / 'Training_01.csv')
-    test_set = SceneDataset(data_path=args.data_path, csv_path=args.tables_dir / 'Testing_01.csv')
+    train_set = SceneDataset(data_path=args.data_path, csv_path=args.tables_dir / 'Training_05.csv')
+    test_set = SceneDataset(data_path=args.data_path, csv_path=args.tables_dir / 'Testing_05.csv')
 
     n_classes = train_set.get_num_classes()
     classifier = Classifier(arch=args.arch, n_classes=n_classes)

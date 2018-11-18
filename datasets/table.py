@@ -35,7 +35,7 @@ class SceneDataset(Dataset):
     def _set_default_transforms(self):
         std = (0.229, 0.224, 0.225)
         mean = (0.485, 0.456, 0.406)
-        size = (128, 128)
+        size = (256, 256)
         transforms = t.Compose([t.Resize(size=size),
                                 t.ToTensor(),
                                 t.Normalize(mean=mean, std=std)]

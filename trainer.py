@@ -31,7 +31,8 @@ class Trainer:
     def train_epoch(self):
         loader = DataLoader(dataset=self.train_set,
                             shuffle=True,
-                            batch_size=192
+                            batch_size=64,
+                            num_workers=6
                             )
 
         self.classifier.model.train()
@@ -49,7 +50,8 @@ class Trainer:
     def test(self):
         loader = DataLoader(dataset=self.test_set,
                             shuffle=False,
-                            batch_size=192
+                            batch_size=64,
+                            num_workers=6
                             )
 
         n_samples = len(loader.dataset)
@@ -82,4 +84,4 @@ class Trainer:
 
             if i % self.test_freq == 0:
                 acc = self.test()
-                print(f'Accuracy: {acc}')
+                print(f'\n Accuracy: {acc}')
