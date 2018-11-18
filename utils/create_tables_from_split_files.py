@@ -7,16 +7,17 @@ import pandas as pd
 
 
 def table_from_split_file(file_path, class_to_enum):
-    paths = pd.read_csv(file_path, header=None, names=['paths'])['paths']
-    paths = np.array(paths)
+    paths_raw = pd.read_csv(file_path, header=None, names=['paths'])['paths']
+    paths_raw = np.array(paths_raw)
 
-    enums, names = [], []
-    for path in paths:
+    enums, names, paths = [], [], []
+    for path in paths_raw:
         class_name = str(Path(path).parent)
+        paths.append(path[1:])
         names.append(class_name)
         enums.append(class_to_enum[class_name])
 
-    names, enums = np.array(names), np.array(enums)
+    names, enums, paths = np.array(names), np.array(enums), np.array(paths)
     df = pd.DataFrame(data={
         'path': paths,
         'class_enum': enums,

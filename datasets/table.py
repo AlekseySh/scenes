@@ -7,10 +7,10 @@ import pandas as pd
 
 class SceneDataset(Dataset):
 
-    def __init__(self, data_path, csv_name, transforms=None):
+    def __init__(self, data_path, csv_path, transforms=None):
         super(Dataset, self).__init__()
 
-        self.path_to_csv = csv_name
+        self.path_to_csv = csv_path
         self.data_path = data_path
 
         if transforms is None:
@@ -18,7 +18,7 @@ class SceneDataset(Dataset):
         else:
             self.transforms = transforms
 
-        self.df = pd.read_csv(data_path / csv_name)
+        self.df = pd.read_csv(self.path_to_csv)
 
     def __getitem__(self, idx):
         path = self.data_path / self.df['path'][idx]

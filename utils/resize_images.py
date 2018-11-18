@@ -8,8 +8,8 @@ from scipy.misc import imresize
 
 def resize_and_save(im_path: Path, height: int, width: int):
     image = mpimg.imread(im_path)
-    imresize(arr=image, size=(height, width))
-    mpimg.imsave(im_path, image)
+    image_resized = imresize(arr=image, size=(height, width))
+    mpimg.imsave(im_path, image_resized)
 
 
 def resize_images_recursively(image_dir: Path, height: int, width: int):
