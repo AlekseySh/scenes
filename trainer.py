@@ -1,25 +1,30 @@
 from tqdm import tqdm
 
 import numpy as np
-from torch.utils.data import DataLoader
+import torch
+from torch.utils.data import DataLoader, Dataset
+
+from models.network import Classifier
 
 
 class Trainer:
 
     def __init__(self,
-                 classifier,
-                 train_set,
-                 test_set,
+                 classifier: Classifier,
+                 train_set: Dataset,
+                 test_set: Dataset,
+                 loader_args: dict,
                  criterion,
                  optimizer,
-                 device,
-                 n_epoch,
-                 test_freq
+                 device: torch.device,
+                 n_epoch: int,
+                 test_freq: int
                  ):
 
         self.classifier = classifier
         self.train_set = train_set
         self.test_set = test_set
+        self.loader_args = loader_args
         self.criterion = criterion
         self.optimizer = optimizer
         self.device = device
@@ -31,8 +36,7 @@ class Trainer:
     def train_epoch(self):
         loader = DataLoader(dataset=self.train_set,
                             shuffle=True,
-                            batch_size=64,
-                            num_workers=6
+                            **self.loader_args
                             )
 
         self.classifier.model.train()
@@ -50,8 +54,7 @@ class Trainer:
     def test(self):
         loader = DataLoader(dataset=self.test_set,
                             shuffle=False,
-                            batch_size=64,
-                            num_workers=6
+                            **self.loader_args
                             )
 
         n_samples = len(loader.dataset)
