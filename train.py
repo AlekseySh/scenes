@@ -7,17 +7,19 @@ import torch.optim as optim
 import torch.nn as nn
 
 from datasets.table import SceneDataset
-from models.network import Classifier
+from models.meta import Classifier
 from trainer import Trainer
 
 
 def main(args):
 
-    train_set = SceneDataset(data_path=args.data_path, csv_path=args.tables_dir / 'Training_05.csv')
-    test_set = SceneDataset(data_path=args.data_path, csv_path=args.tables_dir / 'Testing_05.csv')
+    train_csv = args.tables_dir / f'Training_{args.split_id}.csv'
+    test_csv = args.tables_dir /  f'Testing_{args.split_id}.csv'
+    train_set = SceneDataset(args.data_path, train_csv)
+    test_set = SceneDataset(args.data_path, test_csv)
 
     n_classes = train_set.get_num_classes()
-    classifier = Classifier(arch=args.arch, n_classes=n_classes)
+    classifier = Classifier(arch=args.arch, n_classes=n_classes, pretrained=args.pretrained)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(classifier.model.parameters())
 
@@ -37,8 +39,8 @@ def main(args):
                       n_epoch=args.n_epoch,
                       test_freq=args.test_freq
                       )
-    trainer.train()
-
+    acc = trainer.train()
+    return acc
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -51,6 +53,8 @@ def get_parser():
     parser.add_argument('-f', '--test_freq', dest='test_freq', type=int, default=1)
     parser.add_argument('-b', '--batch_size', dest='batch_size', type=int, default=64)
     parser.add_argument('-n', '--n_workers', dest='n_workers', type=int, default=6)
+    parser.add_argument('-i', '--split_id', dest='split_id', type=str, default='01')
+    parser.add_argument('-g', '--is_pretrained', dest='pretrained', type=bool, default=True)
     return parser
 
 
@@ -59,17 +63,18 @@ if __name__ == '__main__':
     arg_parser = get_parser()
     params = arg_parser.parse_args()
 
+    # make folds
     log_fold = params.work_dir / 'log'
     ckpt_fold = params.work_dir / 'checkpoints'
     board_fold = params.work_dir / 'board'
-
-    [fold.mkdir(exist_ok=True) for fold in [params.work_dir, log_fold, ckpt_fold, board_fold]]
+    for fold in [params.work_dir, log_fold, ckpt_fold, board_fold]:
+        fold.mkdir(exist_ok=True)
 
     # logging
     log_file = log_fold / 'train.log'
     fh = logging.FileHandler(log_file)
     sh = logging.StreamHandler()
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
-
     logging.info(f'\n Start train \n {params} \n')
+
     main(args=params)

@@ -8,14 +8,14 @@ from torch.nn.functional import softmax
 
 class Classifier:
 
-    def __init__(self, arch, n_classes):
+    def __init__(self, arch, n_classes, pretrained):
         self.n_classes = n_classes
         self.logger = logging.getLogger()
 
         if arch == 'resnet18':
-            self.model = models.resnet18(pretrained=True)
+            self.model = models.resnet18(pretrained=pretrained)
         elif arch == 'resnet50':
-            self.model = models.resnet50(pretrained=True)
+            self.model = models.resnet50(pretrained=pretrained)
         else:
             raise ValueError(f'Unexpected type {arch}')
 

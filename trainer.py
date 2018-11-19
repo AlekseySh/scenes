@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from utils.common import OnlineAvg
 
-from models.network import Classifier
+from models.meta import Classifier
 from metrics.classification import MetricsCalculator
 
 
@@ -37,8 +37,8 @@ class Trainer:
         self.n_epoch = n_epoch
         self.test_freq = test_freq
 
-        self.classifier.model.to(self.device)
         self.logger = logging.getLogger()
+        self.classifier.model.to(self.device)
 
     def train_epoch(self):
         self.classifier.model.train()
@@ -68,9 +68,11 @@ class Trainer:
                             **self.loader_args
                             )
         n_samples = len(loader.dataset)
+
         labels = np.zeros([n_samples, 1], np.int)
         preds = np.zeros_like(labels)
         confs = np.zeros_like(labels, dtype=np.float)
+
         for i, data in tqdm(enumerate(loader), total=len(loader)):
             image = data['image'].to(self.device)
             label = data['label'].numpy()
@@ -102,3 +104,5 @@ class Trainer:
                 save_path = self.work_dir / 'checkpoints' / f'epoch{i}.pth.tar'
                 self.classifier.save(save_path, meta=metrics)
                 self.logger.info(f'\n Accuracy: {round(acc, 3)}')
+
+        return acc

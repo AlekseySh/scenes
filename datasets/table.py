@@ -22,7 +22,7 @@ class SceneDataset(Dataset):
 
     def __getitem__(self, idx):
         path = self.data_path / self.df['path'][idx]
-        image = self._load_img_to_tensor(path, self.transforms)
+        image = _load_img_to_tensor(path, self.transforms)
         label = self.df['class_enum'][idx]
         data = {'image': image,
                 'label': label
@@ -45,8 +45,8 @@ class SceneDataset(Dataset):
     def get_num_classes(self):
         return len(set(self.df['class_enum']))
 
-    @staticmethod
-    def _load_img_to_tensor(path, transforms):
-        pil_image = PIL.Image.open(path).convert('RGB')
-        tensor_image = transforms(pil_image)
-        return tensor_image
+
+def _load_img_to_tensor(path, transforms):
+    pil_image = PIL.Image.open(path).convert('RGB')
+    tensor_image = transforms(pil_image)
+    return tensor_image
