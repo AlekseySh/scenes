@@ -123,3 +123,4 @@ class Trainer:
                 stopper.update(acc)
                 if stopper.check_criterion():
                     break
+        return max_metric
