@@ -5,7 +5,8 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
-from utils.common import OnlineAvg
+from utils.common import OnlineAvg, Stopper
+from tensorboardX import SummaryWriter
 
 from models.meta import Classifier
 from metrics.classification import MetricsCalculator
@@ -22,7 +23,7 @@ class Trainer:
                  criterion,
                  optimizer,
                  device: torch.device,
-                 n_epoch: int,
+                 n_max_epoch: int,
                  test_freq: int
                  ):
 
@@ -34,10 +35,12 @@ class Trainer:
         self.criterion = criterion
         self.optimizer = optimizer
         self.device = device
-        self.n_epoch = n_epoch
+        self.n_max_epoch = n_max_epoch
         self.test_freq = test_freq
 
+        self.i_global = 0
         self.logger = logging.getLogger()
+        self.writer = SummaryWriter(self.work_dir / 'board')
         self.classifier.model.to(self.device)
 
     def train_epoch(self):
@@ -59,8 +62,11 @@ class Trainer:
             self.optimizer.step()
 
             avg_loss.update(loss)
+            self.i_global += 1
+            self.writer.add_scalar('Loss', loss.data, self.i_global)
 
         self.logger.info(f'\n Loss: {avg_loss.avg}')
+        self.writer.add_scalar('AvgLoss', avg_loss.avg, self.i_global)
 
     def test(self):
         loader = DataLoader(dataset=self.test_set,
@@ -90,10 +96,13 @@ class Trainer:
 
         mc = MetricsCalculator(gt=labels, pred=preds, score=confs)
         metrics = mc.calc()
+        self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 
     def train(self):
-        for i in range(self.n_epoch):
+        stopper = Stopper(n_observation=5, delta=1)  # todo
+        max_metric = 0
+        for i in range(self.n_max_epoch):
             self.logger.info(f'\n Epoch {i} from {self.n_epoch}')
             self.train_epoch()
 
@@ -101,8 +110,16 @@ class Trainer:
                 metrics = self.test()
                 acc = metrics['accuracy']
 
+                # save model
                 save_path = self.work_dir / 'checkpoints' / f'epoch{i}.pth.tar'
                 self.classifier.save(save_path, meta=metrics)
                 self.logger.info(f'\n Accuracy: {round(acc, 3)}')
 
-        return acc
+                if acc > max_metric:
+                    max_metric = acc
+                    save_path_best = save_path / 'checkpoints' / 'best.pth.tar'
+                    self.classifier.save(save_path_best, meta=metrics)
+
+                stopper.update(acc)
+                if stopper.check_criterion():
+                    break

@@ -19,7 +19,7 @@ def main(args):
     test_set = SceneDataset(args.data_path, test_csv)
 
     n_classes = train_set.get_num_classes()
-    classifier = Classifier(arch=args.arch, n_classes=n_classes, pretrained=args.pretrained)
+    classifier = Classifier(args.arch, n_classes, args.pretrained)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(classifier.model.parameters())
 
@@ -36,7 +36,7 @@ def main(args):
                       criterion=criterion,
                       optimizer=optimizer,
                       device=device,
-                      n_epoch=args.n_epoch,
+                      n_max_epoch=args.n_max_epoch,
                       test_freq=args.test_freq
                       )
     acc = trainer.train()
@@ -49,7 +49,7 @@ def get_parser():
     parser.add_argument('-w', '--work_dir', dest='work_dir', type=Path)
     parser.add_argument('-d', '--device', dest='device', type=torch.device, default='cuda:0')
     parser.add_argument('-a', '--architecture', dest='arch', type=str, default='resnet18')
-    parser.add_argument('-e', '--n_epoch', dest='n_epoch', type=int, default=100)
+    parser.add_argument('-e', '--n_max_epoch', dest='n_max_epoch', type=int, default=100)
     parser.add_argument('-f', '--test_freq', dest='test_freq', type=int, default=1)
     parser.add_argument('-b', '--batch_size', dest='batch_size', type=int, default=64)
     parser.add_argument('-n', '--n_workers', dest='n_workers', type=int, default=6)

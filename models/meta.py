@@ -46,3 +46,9 @@ class Classifier:
         }
         torch.save(checkpoint, path)
         self.logger.info(f'Model saved to {path}.')
+
+    def load(self, path_to_ckpt):
+        checkpoint = torch.load(path_to_ckpt)
+        self.model.load_state_dict(checkpoint['state_dict'])
+        meta = checkpoint['meta']
+        return meta
