@@ -12,7 +12,6 @@ from trainer import Trainer
 
 
 def main(args):
-
     # make folds
     log_fold = args.work_dir / 'log'
     ckpt_fold = args.work_dir / 'checkpoints'
@@ -25,10 +24,10 @@ def main(args):
     fh = logging.FileHandler(log_file)
     sh = logging.StreamHandler()
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
-    logging.info(f'\n Start train \n {params} \n')
+    logging.info(f'\n Start train \n {args} \n')
 
-    train_set = SceneDataset(args.data_path, args.train_table)
-    test_set = SceneDataset(args.data_path, args.test_table)
+    train_set = SceneDataset(args.data_path, args.tables_dir / args.train_table)
+    test_set = SceneDataset(args.data_path, args.tables_dir / args.test_table)
 
     n_classes = train_set.get_num_classes()
     classifier = Classifier(args.arch, n_classes, args.pretrained)
@@ -64,7 +63,7 @@ def get_parser():
     parser.add_argument('-a', '--arch', dest='arch', type=str, default='resnet18')
     parser.add_argument('-e', '--n_max_epoch', dest='n_max_epoch', type=int, default=100)
     parser.add_argument('-f', '--test_freq', dest='test_freq', type=int, default=1)
-    parser.add_argument('-b', '--batch_size', dest='batch_size', type=int, default=64)
+    parser.add_argument('-b', '--batch_size', dest='batch_size', type=int, default=256)
     parser.add_argument('-n', '--n_workers', dest='n_workers', type=int, default=6)
     parser.add_argument('-m', '--train_table', dest='train_table', type=str, default='Training_01.csv')
     parser.add_argument('-l', '--test_table', dest='test_table', type=str, default='Testing_01.csv')
@@ -73,8 +72,5 @@ def get_parser():
 
 
 if __name__ == '__main__':
-
     arg_parser = get_parser()
-    params = arg_parser.parse_args()
-
-    main(args=params)
+    main(args=arg_parser.parse_args())

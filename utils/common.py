@@ -16,16 +16,16 @@ class Stopper:
         self.delta = delta
 
         self.cur_val = None
-        self.value_max = 0
+        self.max_val = 0
         self.num_fails = 0
 
     def update(self, cur_val):
         self.cur_val = cur_val
-        self._update_max()
         self._count_fails()
+        self._update_max()
 
     def _count_fails(self):
-        if self.value_max - self.cur_val >= self.delta:
+        if self.cur_val - self.max_val <= self.delta:
             self.num_fails += 1
         else:
             self.num_fails = 0
@@ -35,5 +35,5 @@ class Stopper:
         return is_stop
 
     def _update_max(self):
-        if self.value_max < self.cur_val:
-            self.value_max = self.cur_val
+        if self.max_val < self.cur_val:
+            self.max_val = self.cur_val

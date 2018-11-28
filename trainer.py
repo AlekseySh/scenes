@@ -99,11 +99,14 @@ class Trainer:
         self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 
+    def test_tta(self):
+        return self
+
     def train(self):
-        stopper = Stopper(n_observation=5, delta=1)  # todo
+        stopper = Stopper(n_observation=5, delta=0.01)
         max_metric = 0
         for i in range(self.n_max_epoch):
-            self.logger.info(f'\n Epoch {i} from {self.n_epoch}')
+            self.logger.info(f'\n Epoch {i} from {self.n_max_epoch}')
             self.train_epoch()
 
             if i % self.test_freq == 0:
@@ -117,10 +120,12 @@ class Trainer:
 
                 if acc > max_metric:
                     max_metric = acc
-                    save_path_best = save_path / 'checkpoints' / 'best.pth.tar'
+                    save_path_best = self.work_dir / 'checkpoints' / 'best.pth.tar'
                     self.classifier.save(save_path_best, meta=metrics)
 
                 stopper.update(acc)
                 if stopper.check_criterion():
+                    self.logger.info(f'\n Training stoped by criterion. Reached {i} epoch of {self.n_max_epoch}')
                     break
+
         return max_metric
