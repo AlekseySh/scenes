@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -17,19 +18,38 @@ class Classifier:
         elif arch == 'resnet50':
             self.model = models.resnet50(pretrained=pretrained)
         else:
+            # noinspection Annotator
             raise ValueError(f'Unexpected type {arch}')
 
-        self.logger.info(f'\n Selected architecture: {arch}')
+        self.logger.info(f'Selected architecture: {arch}')
 
         self._adopt_num_classes()
         self._adopt_pooling()
 
-    def classify(self, image):
+    def classify(self, inp):
         self.model.eval()
-        logits = self.model(image)
-        probs = softmax(logits)
+        if isinstance(inp, list):
+            logits = self._classify_tta(inp)
+        else:
+            logits = self.model(inp)
+        probs = softmax(logits, dim=1)
         confidence, label = torch.max(probs, dim=1)
         return label, confidence
+
+    def _classify_tta(self, tensor_list):
+        bs, n_tta = tensor_list[0].shape[0], len(tensor_list)
+        input_tensor = torch.cat(tensor_list)
+        logits = self.model(input_tensor)
+
+        # now calc averaged by augmentations logit for each sample in batch
+        logits_avg = torch.zeros([bs, self.n_classes], dtype=torch.float)
+        for i in range(bs):
+            ii = np.arange(start=i, stop=n_tta * bs, step=bs)
+            logits_avg[i, :] = torch.mean(logits[ii, :], dim=0)
+        return logits_avg
+
+    def classify_tta(self, image, tta):
+        raise NotImplemented()
 
     def _adopt_num_classes(self):
         input_dim = self.model.fc.in_features

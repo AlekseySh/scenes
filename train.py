@@ -6,7 +6,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 
-from datasets.table import SceneDataset
+from datasets.sun import SceneDataset
 from models.meta import Classifier
 from trainer import Trainer
 
@@ -24,10 +24,14 @@ def main(args):
     fh = logging.FileHandler(log_file)
     sh = logging.StreamHandler()
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
-    logging.info(f'\n Start train \n {args} \n')
+    logging.info(f'Start train \n {args}')
 
-    train_set = SceneDataset(args.data_path, args.tables_dir / args.train_table)
-    test_set = SceneDataset(args.data_path, args.tables_dir / args.test_table)
+    train_set = SceneDataset(data_path=args.data_path,
+                             csv_path=args.tables_dir / args.train_table
+                             )
+    test_set = SceneDataset(data_path=args.data_path,
+                            csv_path=args.tables_dir / args.test_table
+                            )
 
     n_classes = train_set.get_num_classes()
     classifier = Classifier(args.arch, n_classes, args.pretrained)
@@ -35,22 +39,20 @@ def main(args):
     optimizer = optim.Adam(classifier.model.parameters())
 
     device = args.device if torch.cuda.is_available() else torch.device('cpu')
-    logging.getLogger().info(f'\n Using device: {device}')
-
-    loader_args = {'batch_size': args.batch_size, 'num_workers': args.n_workers}
+    logging.getLogger().info(f'Using device: {device}')
 
     trainer = Trainer(classifier=classifier,
                       work_dir=args.work_dir,
                       train_set=train_set,
                       test_set=test_set,
-                      loader_args=loader_args,
+                      batch_size=args.batch_size,
+                      n_workers=args.n_workers,
                       criterion=criterion,
                       optimizer=optimizer,
                       device=device,
-                      n_max_epoch=args.n_max_epoch,
                       test_freq=args.test_freq
                       )
-    max_metric = trainer.train()
+    max_metric = trainer.train(n_max_epoch=args.n_max_epoch)
     return max_metric
 
 
