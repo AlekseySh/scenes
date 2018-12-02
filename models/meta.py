@@ -29,10 +29,9 @@ class Classifier:
     def classify(self, inp):
         self.model.eval()
         if isinstance(inp, list):
-            logits = self._classify_tta(inp)
+            probs = self._classify_tta(tensor_list=inp)
         else:
-            logits = self.model(inp)
-        probs = softmax(logits, dim=1)
+            probs = self._classify_simple(tensor=inp)
         confidence, label = torch.max(probs, dim=1)
         return label, confidence
 
@@ -42,11 +41,17 @@ class Classifier:
         logits = self.model(input_tensor)
 
         # now calc averaged by augmentations logit for each sample in batch
-        logits_avg = torch.zeros([bs, self.n_classes], dtype=torch.float)
+        probs_avg = torch.zeros([bs, self.n_classes], dtype=torch.float)
         for i in range(bs):
             ii = np.arange(start=i, stop=n_tta * bs, step=bs)
-            logits_avg[i, :] = torch.mean(logits[ii, :], dim=0)
-        return logits_avg
+            probs = softmax(logits[ii, :], dim=1)
+            probs_avg[i, :] = torch.mean(probs, dim=0)
+        return probs_avg
+
+    def _classify_simple(self, tensor):
+        logits = self.model(tensor)
+        probs = softmax(logits, dim=1)
+        return probs
 
     def classify_tta(self, image, tta):
         raise NotImplemented()

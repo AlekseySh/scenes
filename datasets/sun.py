@@ -17,7 +17,6 @@ class SceneDataset(Dataset):
         self.data_path = data_path
         self.csv_path = csv_path
         self.transforms = None
-        self.n_tta = None
 
         self.df = pd.read_csv(self.csv_path)
 
@@ -43,9 +42,8 @@ class SceneDataset(Dataset):
     def set_train_transforms(self):
         self.transforms = get_train_transforms()
 
-    def set_test_transforms(self):
-        transforms, n_tta = get_test_transforms()
-        self.transforms, self.n_tta = transforms, n_tta
+    def set_test_transforms(self, n_augs: int):
+        self.transforms = get_test_transforms(n_augs=n_augs)
 
 
 std = (0.229, 0.224, 0.225)
@@ -63,25 +61,41 @@ def get_default_transforms():
 
 def get_train_transforms():
     transforms = t.Compose([t.Resize(size=size),
-                            t.RandomHorizontalFlip(),
-                            t.RandomVerticalFlip(),
+                            get_random_transforms(),
                             t.ToTensor(),
                             t.Normalize(mean=mean, std=std)]
                            )
     return transforms
 
 
-def get_test_transforms():
+def get_test_transforms(n_augs):
     # Test Time Augmentation (TTA) aproach
-    aug_list = [
-        t.RandomHorizontalFlip(p=0.5),
-        t.RandomVerticalFlip(p=0.5)
-    ]
-    n_augs = len(aug_list)
+    rand_transforms = get_random_transforms()
     default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=mean, std=std)])
     augs = t.Compose([
         t.Resize(size=size),
-        t.Lambda(lambda image: [aug(image) for aug in aug_list]),
+        t.Lambda(lambda image: [rand_transforms(image) for _ in range(n_augs)]),
         t.Lambda(lambda images: [default_transforms(image) for image in images])
     ])
-    return augs, n_augs
+    return augs
+
+
+def f_identity(image): return image
+
+
+def get_random_transforms():
+    crop_k = 0.9
+    degree = 10
+    color_k = 0.3
+    apply_prob = 0.5
+
+    crop_sz = (int(crop_k * size[0]), int(crop_k * size[1]))
+
+    aug_list = [
+        t.functional.hflip,
+        t.Compose([t.RandomCrop(size=crop_sz), t.Resize(size=size)]),
+        t.RandomRotation(degrees=(-degree, degree)),
+        t.ColorJitter(brightness=color_k, contrast=color_k, saturation=color_k)
+    ]
+    rand_transforms = t.RandomOrder([t.RandomApply([aug], p=apply_prob) for aug in aug_list])
+    return rand_transforms

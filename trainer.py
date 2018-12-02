@@ -76,8 +76,9 @@ class Trainer:
 
     def test(self, use_tta: bool):
         if use_tta:
-            self.test_set.set_test_transforms()
-            batch_size = int(self.batch_size / self.test_set.n_tta)
+            n_tta = 8
+            self.test_set.set_test_transforms(n_augs=n_tta)
+            batch_size = int(self.batch_size / n_tta)
             def to_device(x_arr): return [x.to(self.device) for x in x_arr]
         else:
             batch_size = self.batch_size
@@ -127,11 +128,13 @@ class Trainer:
             if i % self.test_freq == 0:
                 # test
                 acc = self.test(use_tta=False)['accuracy']
+                accccccc = self.test(use_tta=True)['accuracy']
+                logger.info(f'accccc: {accccccc}')
 
                 # save model
                 save_path = self.work_dir / 'checkpoints' / f'epoch{i}.pth.tar'
                 self.classifier.save(save_path, meta={'acc': acc})
-                logger.info(f'Accuracy: {round(acc, 3)}')
+                logger.info(f'Accuracy: {acc}')
 
                 if acc > acc_max:
                     acc_max, best_epoch = acc, i
