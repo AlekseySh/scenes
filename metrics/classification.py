@@ -10,10 +10,10 @@ class MetricsCalculator:
         self.gt = gt
         self.pred = pred
         self.score = score
-        self.num = len(self.gt)
+        self.samples_num = len(self.gt)
 
     def calc(self):
-        acc = np.sum(self.gt == self.pred) / self.num
+        acc = np.sum(self.gt == self.pred) / self.samples_num
         metrics = {
             'accuracy': acc
         }
