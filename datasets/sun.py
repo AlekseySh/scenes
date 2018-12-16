@@ -2,11 +2,19 @@ import logging
 from pathlib import Path
 
 import PIL
+import cv2
+import numpy as np
 import pandas as pd
+import torch
 import torchvision.transforms as t
 from torch.utils.data import Dataset
 
+STD = (0.229, 0.224, 0.225)
+MEAN = (0.485, 0.456, 0.406)
+SIZE = (128, 128)
+
 logger = logging.getLogger(__name__)
+logger.info(f'Used image size: {SIZE}')
 
 
 class SceneDataset(Dataset):
@@ -21,17 +29,45 @@ class SceneDataset(Dataset):
         self.df = pd.read_csv(self.csv_path)
 
     def __getitem__(self, idx):
-        path = self.data_path / self.df['path'][idx]
-        pil_image = PIL.Image.open(path).convert('RGB')
-        im = self.transforms(pil_image)
+        pil_image = self.__read_pil_image(idx)
         label = self.df['class_enum'][idx]
-        data = {'image': im,
-                'label': label
-                }
+        data = {
+            'image': self.transforms(pil_image),
+            'label': label,
+        }
         return data
 
     def __len__(self):
         return len(self.df)
+
+    def get_signed_image(self, idx, color=(0, 255, 0)):
+        name = beutify_class_name(self.df['class_name'][idx])
+        image = np.array(self.__read_pil_image(idx))
+        image = cv2.putText(img=image.astype(np.uint8),
+                            org=(5, 25),
+                            text=name,
+                            fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                            fontScale=1,
+                            thickness=2,
+                            color=color
+                            )
+        image = t.ToTensor()(image)
+        image = torch.tensor(255 * image, dtype=torch.uint8)
+        return image
+
+    def get_class_samples(self, n_samples, label):
+        layout = torch.zeros([n_samples, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
+        ii_class = np.squeeze(np.nonzero(self.df['class_enum'] == label))
+        ii_sampels = np.random.choice(ii_class, size=n_samples)
+        for i, ind in enumerate(ii_sampels):
+            layout[i, :, :, :] = self.get_signed_image(ind)
+        return layout
+
+
+    def __read_pil_image(self, idx):
+        path = self.data_path / self.df['path'][idx]
+        pil_image = PIL.Image.open(path).convert('RGB')
+        return pil_image
 
     def get_num_classes(self):
         return len(set(self.df['class_enum']))
@@ -46,24 +82,19 @@ class SceneDataset(Dataset):
         self.transforms = get_test_transforms(n_augs=n_augs)
 
 
-std = (0.229, 0.224, 0.225)
-mean = (0.485, 0.456, 0.406)
-size = (128, 128)
-
-
 def get_default_transforms():
-    transforms = t.Compose([t.Resize(size=size),
+    transforms = t.Compose([t.Resize(size=SIZE),
                             t.ToTensor(),
-                            t.Normalize(mean=mean, std=std)]
+                            t.Normalize(mean=MEAN, std=STD)]
                            )
     return transforms
 
 
 def get_train_transforms():
-    transforms = t.Compose([t.Resize(size=size),
+    transforms = t.Compose([t.Resize(size=SIZE),
                             get_random_transforms(),
                             t.ToTensor(),
-                            t.Normalize(mean=mean, std=std)]
+                            t.Normalize(mean=MEAN, std=STD)]
                            )
     return transforms
 
@@ -71,16 +102,13 @@ def get_train_transforms():
 def get_test_transforms(n_augs):
     # Test Time Augmentation (TTA) aproach
     rand_transforms = get_random_transforms()
-    default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=mean, std=std)])
+    default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
     augs = t.Compose([
-        t.Resize(size=size),
+        t.Resize(size=SIZE),
         t.Lambda(lambda image: [rand_transforms(image) for _ in range(n_augs)]),
         t.Lambda(lambda images: [default_transforms(image) for image in images])
     ])
     return augs
-
-
-def f_identity(image): return image
 
 
 def get_random_transforms():
@@ -89,13 +117,24 @@ def get_random_transforms():
     color_k = 0.3
     apply_prob = 0.5
 
-    crop_sz = (int(crop_k * size[0]), int(crop_k * size[1]))
+    crop_sz = (int(crop_k * SIZE[0]), int(crop_k * SIZE[1]))
 
     aug_list = [
         t.functional.hflip,
-        t.Compose([t.RandomCrop(size=crop_sz), t.Resize(size=size)]),
+        t.Compose([t.RandomCrop(size=crop_sz), t.Resize(size=SIZE)]),
         t.RandomRotation(degrees=(-degree, degree)),
         t.ColorJitter(brightness=color_k, contrast=color_k, saturation=color_k)
     ]
     rand_transforms = t.RandomOrder([t.RandomApply([aug], p=apply_prob) for aug in aug_list])
     return rand_transforms
+
+
+def beutify_class_name(class_name):
+    parent_name = Path(class_name).parent.name
+    if 'indoor' in class_name:
+        name = f'{parent_name}.i'
+    elif 'outdoor' in class_name:
+        name = f'{parent_name}.o'
+    else:
+        name = Path(class_name).name
+    return str(name)

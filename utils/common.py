@@ -1,3 +1,12 @@
+
+def args_to_text(args):
+    text = ''
+    for arg in vars(args):
+        string = f'{arg}: {getattr(args, arg)} \n'
+        text += string
+    return text
+
+
 class OnlineAvg:
 
     def __init__(self):
@@ -11,8 +20,8 @@ class OnlineAvg:
 
 class Stopper:
 
-    def __init__(self, n_observation, delta):
-        self.n_observation = n_observation
+    def __init__(self, n_obs, delta):
+        self.n_obs = n_obs
         self.delta = delta
 
         self.cur_val = None
@@ -31,7 +40,7 @@ class Stopper:
             self.num_fails = 0
 
     def check_criterion(self):
-        is_stop = self.num_fails == self.n_observation
+        is_stop = self.num_fails == self.n_obs
         return is_stop
 
     def _update_max(self):

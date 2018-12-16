@@ -18,3 +18,9 @@ class MetricsCalculator:
             'accuracy': acc
         }
         return metrics
+
+    def find_worst_mistakes(self, n_worst: int):
+        ii_mistakes = np.nonzero(self.pred != self.gt)
+        probs = self.score[ii_mistakes]
+        ii_worst = np.argsort(probs)[-n_worst:]
+        return ii_worst

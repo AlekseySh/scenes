@@ -3,12 +3,13 @@ import logging
 from pathlib import Path
 
 import torch
-import torch.optim as optim
 import torch.nn as nn
+import torch.optim as optim
 
 from datasets.sun import SceneDataset
 from models.meta import Classifier
 from trainer import Trainer
+from utils.common import args_to_text, Stopper
 
 
 def main(args):
@@ -24,7 +25,8 @@ def main(args):
     fh = logging.FileHandler(log_file)
     sh = logging.StreamHandler()
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
-    logging.info(f'Start train \n {args}')
+    logger = logging.getLogger(__name__)
+    logger.info(f'Params: \n{args_to_text(args)}')
 
     train_set = SceneDataset(data_path=args.data_path,
                              csv_path=args.tables_dir / args.train_table
@@ -39,7 +41,9 @@ def main(args):
     optimizer = optim.Adam(classifier.model.parameters())
 
     device = args.device if torch.cuda.is_available() else torch.device('cpu')
-    logging.getLogger().info(f'Using device: {device}')
+    logger.info(f'Using device: {device}')
+
+    stopper = Stopper(args.n_stopper_obs, args.n_stopper_delta)
 
     trainer = Trainer(classifier=classifier,
                       work_dir=args.work_dir,
@@ -52,24 +56,32 @@ def main(args):
                       device=device,
                       test_freq=args.test_freq
                       )
-    max_metric = trainer.train(n_max_epoch=args.n_max_epoch)
+
+    max_metric = trainer.train(n_max_epoch=args.n_max_epoch,
+                               n_tta=args.n_tta,
+                               stopper=stopper
+                               )
     return max_metric
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--data_path', dest='data_path', type=Path)
+    parser.add_argument('-d', '--data_path', dest='data_path', type=Path)
     parser.add_argument('-t', '--tables_dir', dest='tables_dir', type=Path)
     parser.add_argument('-w', '--work_dir', dest='work_dir', type=Path)
-    parser.add_argument('-d', '--device', dest='device', type=torch.device, default='cuda:0')
-    parser.add_argument('-a', '--arch', dest='arch', type=str, default='resnet18')
-    parser.add_argument('-e', '--n_max_epoch', dest='n_max_epoch', type=int, default=100)
-    parser.add_argument('-f', '--test_freq', dest='test_freq', type=int, default=1)
-    parser.add_argument('-b', '--batch_size', dest='batch_size', type=int, default=256)
-    parser.add_argument('-n', '--n_workers', dest='n_workers', type=int, default=6)
-    parser.add_argument('-m', '--train_table', dest='train_table', type=str, default='Training_01.csv')
-    parser.add_argument('-l', '--test_table', dest='test_table', type=str, default='Testing_01.csv')
-    parser.add_argument('-g', '--pretrained', dest='pretrained', type=bool, default=True)
+    # with default values
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
+    parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
+    parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=100)
+    parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
+    parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)
+    parser.add_argument('--n_workers', dest='n_workers', type=int, default=6)
+    parser.add_argument('--n_stopper_obs', dest='n_stopper_obs', type=int, default=5)
+    parser.add_argument('--n_stopper_delta', dest='n_stopper_delta', type=float, default=0.005)
+    parser.add_argument('--train_table', dest='train_table', type=str, default='Training_01.csv')
+    parser.add_argument('--test_table', dest='test_table', type=str, default='Testing_01.csv')
+    parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
     return parser
 
 
