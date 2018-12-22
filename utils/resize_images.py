@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
-from tqdm import tqdm
 
 import matplotlib.image as mpimg
 from scipy.misc import imresize
+from tqdm import tqdm
 
 
 def resize_and_save(im_path_src: Path,

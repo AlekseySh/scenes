@@ -1,12 +1,10 @@
-from pathlib import Path
 import argparse
 import json
+from pathlib import Path
 
 import pandas as pd
 
-
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path_to_names_file', dest='path_to_names', type=Path)
     args = parser.parse_args()

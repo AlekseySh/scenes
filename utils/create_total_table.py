@@ -1,9 +1,9 @@
-from pathlib import Path
 import argparse
 import json
+from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def create_table(data_path, class_to_enum):
@@ -28,7 +28,6 @@ def create_table(data_path, class_to_enum):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_path', dest='data_path', type=Path)
     parser.add_argument('-m', '--mapping_path', dest='mapping_path', type=Path)

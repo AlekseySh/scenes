@@ -63,7 +63,6 @@ class SceneDataset(Dataset):
             layout[i, :, :, :] = self.get_signed_image(ind)
         return layout
 
-
     def __read_pil_image(self, idx):
         path = self.data_path / self.df['path'][idx]
         pil_image = PIL.Image.open(path).convert('RGB')

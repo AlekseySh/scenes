@@ -120,7 +120,7 @@ class Trainer:
         mc = MetricsCalculator(gt=labels, pred=preds, score=confs)
         metrics = mc.calc()
         ii_worst = mc.find_worst_mistakes(n_worst=5)
-        self.visualize_errors(ii_worst=ii_worst, labels_gt=labels[ii_worst])
+        # self.visualize_errors(ii_worst=ii_worst, labels_gt=labels[ii_worst])
         self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 

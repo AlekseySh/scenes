@@ -1,4 +1,3 @@
-
 def args_to_text(args):
     text = ''
     for arg in vars(args):

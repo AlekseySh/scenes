@@ -38,7 +38,7 @@ def main(args):
     n_classes = train_set.get_num_classes()
     classifier = Classifier(args.arch, n_classes, args.pretrained)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(classifier.model.parameters())
+    optimizer = optim.Adam(classifier.model.parameters(), lr=1e-4)
 
     device = args.device if torch.cuda.is_available() else torch.device('cpu')
     logger.info(f'Using device: {device}')

@@ -15,6 +15,8 @@ class Classifier:
 
         if arch == 'resnet18':
             self.model = models.resnet18(pretrained=pretrained)
+        elif arch == 'resnet34':
+            self.model = models.resnet34(pretrained=pretrained)
         elif arch == 'resnet50':
             self.model = models.resnet50(pretrained=pretrained)
         else:
