@@ -160,7 +160,7 @@ class Trainer:
         return max(acc_max, acc_tta)
 
     def visualize_errors(self, ii_worst, labels_pred):
-        main_color = (255, 255, 255)
+        main_color = (0, 0, 0)
         n_gt_samples, gt_color = 2, (0, 255, 0)
         n_pred_samples, pred_color = 2, (255, 0, 0)
 
@@ -170,8 +170,8 @@ class Trainer:
 
         for (ind, label_pred) in zip(ii_worst, labels_pred):
             label_gt = self.test_set[ind]['label']
-            name_gt = beutify_class_name(name_to_enum.inv[label_pred])
-            name_pred = beutify_class_name(name_to_enum.inv[label_gt])
+            name_gt = beutify_class_name(name_to_enum.inv[label_gt])
+            name_pred = beutify_class_name(name_to_enum.inv[label_pred])
 
             main_img = self.test_set.get_signed_image(idx=ind,
                                                       text=[f'pred: {name_pred}', f'gt: {name_gt}'],
