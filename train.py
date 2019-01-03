@@ -28,10 +28,10 @@ def main(args):
     logger = logging.getLogger(__name__)
     logger.info(f'Params: \n{args_to_text(args)}')
 
-    train_set = SceneDataset(data_path=args.data_path,
+    train_set = SceneDataset(data_fold=args.data_path,
                              csv_path=args.tables_dir / args.train_table
                              )
-    test_set = SceneDataset(data_path=args.data_path,
+    test_set = SceneDataset(data_fold=args.data_path,
                             csv_path=args.tables_dir / args.test_table
                             )
 

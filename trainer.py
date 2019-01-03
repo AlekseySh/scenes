@@ -9,9 +9,11 @@ from torchvision import utils as vutils
 from tqdm import tqdm
 
 from datasets.sun import SIZE
+from datasets.sun import beutify_class_name
 from metrics.classification import MetricsCalculator
 from models.meta import Classifier
 from utils.common import OnlineAvg, Stopper
+from utils.data import get_name_enum_mapping
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +99,7 @@ class Trainer:
                             )
         n_samples = len(loader.dataset)
 
-        labels = np.zeros([n_samples, 1], np.int)
+        labels = np.zeros(n_samples, np.int)
         preds = np.zeros_like(labels)
         confs = np.zeros_like(labels, dtype=np.float)
 
@@ -113,14 +115,14 @@ class Trainer:
             i_start = i * loader.batch_size
             i_stop = min(i_start + loader.batch_size, n_samples)
 
-            labels[i_start: i_stop] = np.asmatrix(label).T
-            preds[i_start: i_stop] = np.asmatrix(pred).T
-            confs[i_start: i_stop] = np.asmatrix(conf).T
+            labels[i_start: i_stop] = label
+            preds[i_start: i_stop] = pred
+            confs[i_start: i_stop] = conf
 
         mc = MetricsCalculator(gt=labels, pred=preds, score=confs)
         metrics = mc.calc()
         ii_worst = mc.find_worst_mistakes(n_worst=5)
-        # self.visualize_errors(ii_worst=ii_worst, labels_gt=labels[ii_worst])
+        self.visualize_errors(ii_worst=ii_worst, labels_pred=preds[ii_worst])
         self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 
@@ -157,13 +159,38 @@ class Trainer:
         logger.info(f'Metric value with TTA: {acc_tta}')
         return max(acc_max, acc_tta)
 
-    def visualize_errors(self, ii_worst, labels_gt):
-        images_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
+    def visualize_errors(self, ii_worst, labels_pred):
+        main_color = (255, 255, 255)
+        n_gt_samples, gt_color = 2, (0, 255, 0)
+        n_pred_samples, pred_color = 2, (255, 0, 0)
 
-        for (ind, label) in zip(ii_worst, labels_gt):
-            image = self.test_set.get_signed_image(idx=ind, color=(255, 0, 0))
-            class_images = self.test_set.get_class_samples(n_samples=5, label=int(label))
-            images_tensor = torch.cat([images_tensor, image.unsqueeze(0), class_images], 0)
+        name_to_enum = get_name_enum_mapping()
 
-        grid = vutils.make_grid(images_tensor, nrow=6,normalize=False, scale_each=True)
-        self.writer.add_image('Worst_mistakes',grid, self.i_global)
+        layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
+
+        for (ind, label_pred) in zip(ii_worst, labels_pred):
+            label_gt = self.test_set[ind]['label']
+            name_gt = beutify_class_name(name_to_enum.inv[label_pred])
+            name_pred = beutify_class_name(name_to_enum.inv[label_gt])
+
+            main_img = self.test_set.get_signed_image(idx=ind,
+                                                      text=[f'pred: {name_pred}', f'gt: {name_gt}'],
+                                                      color=main_color
+                                                      )
+
+            gt_imgs = self.test_set.draw_class_samples(
+                n_samples=n_gt_samples, label=int(label_gt), color=gt_color)
+
+            pred_imgs = self.test_set.draw_class_samples(
+                n_samples=n_pred_samples, label=int(label_pred), color=pred_color)
+
+            layour_tensor = torch.cat(
+                [layour_tensor, main_img.unsqueeze(dim=0), gt_imgs, pred_imgs], dim=0)
+
+        grid = vutils.make_grid(tensor=layour_tensor,
+                                nrow=n_gt_samples + n_pred_samples + 1,
+                                normalize=False,
+                                scale_each=True
+                                )
+
+        self.writer.add_image('Worst_mistakes', grid, self.i_global)
