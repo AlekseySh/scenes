@@ -5,11 +5,11 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from model import Classifier
+from common import args_to_text
 
-from datasets.sun import SceneDataset
-from models.meta import Classifier
-from trainer import Trainer
-from utils.common import args_to_text, Stopper
+from datasets import ImagesDataset as ImSet
+from trainer import Trainer, Stopper
 
 
 def main(args):
@@ -28,12 +28,12 @@ def main(args):
     logger = logging.getLogger(__name__)
     logger.info(f'Params: \n{args_to_text(args)}')
 
-    train_set = SceneDataset(data_fold=args.data_path,
-                             csv_path=args.tables_dir / args.train_table
-                             )
-    test_set = SceneDataset(data_fold=args.data_path,
-                            csv_path=args.tables_dir / args.test_table
-                            )
+    train_set = ImSet(data_fold=args.data_path,
+                      csv_path=args.tables_dir / args.train_table
+                      )
+    test_set = ImSet(data_fold=args.data_path,
+                     csv_path=args.tables_dir / args.test_table
+                     )
 
     n_classes = train_set.get_num_classes()
     classifier = Classifier(args.arch, n_classes, args.pretrained)

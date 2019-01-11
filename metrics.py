@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class MetricsCalculator:
+class Calculator:
 
     def __init__(self, gt, pred, score):
         assert gt.shape == pred.shape

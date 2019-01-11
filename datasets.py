@@ -2,13 +2,13 @@ import logging
 from pathlib import Path
 
 import PIL
-import cv2
 import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as t
+from data.text import beutify_class_name
+from common import put_text_to_image
 from torch.utils.data import Dataset
-from utils.common import put_text_to_image
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logger.info(f'Used image size: {SIZE}')
 
 
-class SceneDataset(Dataset):
+class ImagesDataset(Dataset):
 
     def __init__(self, data_fold: Path, csv_path: Path):
         super(Dataset, self).__init__()
@@ -123,14 +123,3 @@ def get_random_transforms():
     ]
     rand_transforms = t.RandomOrder([t.RandomApply([aug], p=apply_prob) for aug in aug_list])
     return rand_transforms
-
-
-def beutify_class_name(class_name):
-    parent_name = Path(class_name).parent.name
-    if 'indoor' in class_name:
-        name = f'{parent_name}.i'
-    elif 'outdoor' in class_name:
-        name = f'{parent_name}.o'
-    else:
-        name = Path(class_name).name
-    return str(name)
