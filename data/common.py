@@ -6,11 +6,11 @@ from matplotlib import image as mpimg
 from scipy.misc import imresize
 from tqdm import tqdm
 
-from data.getters import get_name_enum_mapping
+from data.getters import get_name_to_enum
 
 
 def table_from_split_file(file_path: Path):
-    class_to_enum = get_name_enum_mapping()
+    class_to_enum = get_name_to_enum()
     paths_raw = pd.read_csv(file_path, header=None, names=['paths'])['paths']
     paths_raw = np.array(paths_raw)
 
@@ -31,7 +31,7 @@ def table_from_split_file(file_path: Path):
 
 
 def table_from_directory(data_path: Path):
-    class_to_enum = get_name_enum_mapping()
+    class_to_enum = get_name_to_enum()
     names, paths, enums = [], [], []
     for name in class_to_enum.keys():
         name = name[1:]  # remove first '/' in class name

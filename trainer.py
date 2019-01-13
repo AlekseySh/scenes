@@ -9,8 +9,7 @@ from torchvision import utils as vutils
 from tqdm import tqdm
 
 from common import OnlineAvg
-from data.getters import get_name_enum_mapping
-from data.text import beutify_class_name
+from data.getters import get_name_to_enum, _beutify_name
 from datasets import SIZE
 from model import Classifier
 
@@ -193,14 +192,14 @@ class Trainer:
         n_gt_samples, gt_color = 2, (0, 255, 0)
         n_pred_samples, pred_color = 2, (255, 0, 0)
 
-        name_to_enum = get_name_enum_mapping()
+        name_to_enum = get_name_to_enum()
 
         layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
 
         for (ind, label_pred) in zip(ii_worst, labels_pred):
             label_gt = self.test_set[ind]['label']
-            name_gt = beutify_class_name(name_to_enum.inv[label_gt])
-            name_pred = beutify_class_name(name_to_enum.inv[label_pred])
+            name_gt = _beutify_name(name_to_enum.inv[label_gt])
+            name_pred = _beutify_name(name_to_enum.inv[label_pred])
 
             main_img = self.test_set.get_signed_image(idx=ind,
                                                       text=[f'pred: {name_pred}', f'gt: {name_gt}'],

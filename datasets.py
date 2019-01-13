@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as t
-from data.text import beutify_class_name
+from data.getters import _beutify_name
 from common import put_text_to_image
 from torch.utils.data import Dataset
 
@@ -44,7 +44,7 @@ class ImagesDataset(Dataset):
 
     def get_signed_image(self, idx, color, text=None):
         if text is None:
-            text = [beutify_class_name(self.df['class_name'][idx])]
+            text = [_beutify_name(self.df['class_name'][idx])]
 
         image = np.array(self.__read_pil_image(idx))
         image = put_text_to_image(image, strings=text, color=color)

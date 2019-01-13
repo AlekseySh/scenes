@@ -5,10 +5,10 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from model import Classifier
-from common import args_to_text
 
+from common import args_to_text
 from datasets import ImagesDataset as ImSet
+from model import Classifier
 from trainer import Trainer, Stopper
 
 
