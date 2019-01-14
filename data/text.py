@@ -1,9 +1,10 @@
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
 from nltk.corpus import wordnet as wn
 
-from data.getters import get_sun_names
+from data.getters import get_sun_names, get_sun_domains
 
 _save_path = Path(__file__).parent / 'files' / 'mappings.csv'
 
@@ -63,16 +64,21 @@ def main():
     names = get_sun_names(need_beutify=True)
     synsets = synsets_from_names(names)
     hypernyms = hypernyms_from_synsets(synsets)
+    domains = get_sun_domains()
 
     data = {
         'raw_names': raw_names,
         'names': names,
         'synsets': synsets_to_words(synsets),
         'hypernyms': synsets_to_words(hypernyms),
+        'domains': domains
     }
 
     df = pd.DataFrame(data)
     df.to_csv(_save_path, index=False)
+
+    counter = Counter(df.domains)
+    print(sum(counter.values()) - 204)
 
 
 if __name__ == '__main__':

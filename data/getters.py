@@ -24,6 +24,15 @@ def get_sun_names(need_beutify=True):
     return names
 
 
+def get_sun_domains():
+    file_path = Path(__file__).parent / 'files' / 'SunClassDomains.txt'
+    with open(file_path, 'r') as f:
+        names = f.readlines()
+
+    names = [name.replace('\n', '') for name in names]
+    return names
+
+
 def _beutify_name(sun_name):
     name = Path(sun_name).name
     if name in _SUN_SPECIAL_WORDS:
