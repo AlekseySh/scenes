@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as t
-from sun_data.getters import beutify_name
+from sun_data.utils import beutify_name
 from common import put_text_to_image
 from torch.utils.data import Dataset
 

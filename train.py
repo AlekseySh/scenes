@@ -10,7 +10,7 @@ import torch.optim as optim
 from common import args_to_text
 from datasets import ImagesDataset as ImSet
 from model import Classifier
-from sun_data.getters import get_split_paths
+from sun_data.utils import get_split_csv_paths
 from trainer import Trainer, Stopper
 
 
@@ -31,7 +31,7 @@ def main(args):
     logger = logging.getLogger(__name__)
     logger.info(f'Params: \n{args_to_text(args)}')
 
-    train_csv, test_csv = get_split_paths(args.split_name)
+    train_csv, test_csv = get_split_csv_paths(args.split_name)
     train_set = ImSet(data_fold=args.data_path, csv_path=train_csv)
     test_set = ImSet(data_fold=args.data_path, csv_path=test_csv)
 

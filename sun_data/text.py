@@ -1,14 +1,12 @@
 from pathlib import Path
 
+import nltk
 import pandas as pd
 from nltk.corpus import wordnet as wn
-import json
-import numpy as np
 
-from sun_data.getters import get_names, get_domains
-from sklearn.preprocessing import LabelEncoder
+from sun_data.utils import get_names, get_domains
 
-_table_path = Path(__file__).parent / 'files' / 'mappings.csv'
+nltk.download('wordnet')
 
 
 def synsets_from_names(names):
@@ -61,7 +59,7 @@ def synsets_to_words(synsets):
     return words
 
 
-def main():
+def save_general_table():
     raw_names = get_names(need_beutify=False)
     names = get_names(need_beutify=True)
     synsets = synsets_from_names(names)
@@ -75,21 +73,10 @@ def main():
         'hypernyms': synsets_to_words(hypernyms),
         'domains': domains
     }
-
+    table_path = Path(__file__).parent / 'files' / 'general.csv'
     df = pd.DataFrame(data)
-    df.to_csv(_table_path, index=False)
-
-    w_exist = df['domains'].values != ''
-    domains_exist = df['domains'][w_exist]
-    enum_domains = LabelEncoder().fit_transform(domains_exist)
-    enum_domains = [int(domain) for domain in enum_domains]
-
-    name_to_enum = dict(zip(df['raw_names'][w_exist], enum_domains))
-
-    mapping_path = Path(__file__).parent / 'files' / 'NameToEnum.json'
-    with open(mapping_path, 'w') as j:
-        json.dump(fp=j, obj=name_to_enum)
+    df.to_csv(table_path, index=False)
 
 
 if __name__ == '__main__':
-    main()
+    save_general_table()

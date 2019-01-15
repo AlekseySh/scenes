@@ -9,10 +9,10 @@ from torchvision import utils as vutils
 from tqdm import tqdm
 
 from common import OnlineAvg
-from metrics import Calculator
-from sun_data.getters import get_name_to_enum, beutify_name
 from datasets import SIZE
+from metrics import Calculator
 from model import Classifier
+from sun_data.utils import get_mapping, beutify_name
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,7 @@ class Trainer:
         mc = Calculator(gt=labels, pred=preds, score=confs)
         metrics = mc.calc()
         ii_worst = mc.find_worst_mistakes(n_worst=5)
-        # self.visualize_errors(ii_worst=ii_worst, labels_pred=preds[ii_worst])
+        self.visualize_errors(ii_worst=ii_worst, labels_pred=preds[ii_worst])
         self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 
@@ -193,7 +193,7 @@ class Trainer:
         n_gt_samples, gt_color = 2, (0, 255, 0)
         n_pred_samples, pred_color = 2, (255, 0, 0)
 
-        name_to_enum = get_name_to_enum()
+        name_to_enum = get_mapping('DomainToEnum')  # todo
 
         layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
 

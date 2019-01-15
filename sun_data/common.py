@@ -7,11 +7,12 @@ from scipy.misc import imresize
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from sun_data.getters import get_name_to_enum
+from sun_data.utils import get_mapping
 
 
 def table_from_split_file(file_path: Path):
-    class_to_enum = get_name_to_enum()
+    name_to_enum = get_mapping('NameToEnum')
+
     paths_raw = pd.read_csv(file_path, header=None, names=['paths'])['paths']
     paths_raw = np.array(paths_raw)
 
@@ -20,7 +21,7 @@ def table_from_split_file(file_path: Path):
         class_name = str(Path(path).parent)
         paths.append(path[1:])  # del '/' from name
         names.append(class_name)
-        enums.append(class_to_enum[class_name])
+        enums.append(name_to_enum[class_name])
 
     names, enums, paths = np.array(names), np.array(enums), np.array(paths)
     df = pd.DataFrame(data={
@@ -31,28 +32,35 @@ def table_from_split_file(file_path: Path):
     return df
 
 
-def tables_from_dir(data_path: Path):
-    class_to_enum = get_name_to_enum()
-    names, paths, enums = [], [], []
-    for name in class_to_enum.keys():
+def domains_tables_from_dir(data_path: Path):
+    name_to_domain = get_mapping('NameToDomain')
+    domain_to_enum = get_mapping('DomainToEnum')
+
+    class_names, paths, enums = [], [], []
+    for name in name_to_domain.keys():
+
+        domain = name_to_domain[name]
+        enum = domain_to_enum[domain]
 
         class_fold = data_path / name[1:]  # del '/' from name
 
         for path in list(class_fold.glob('*.jpg')):
             path = Path(name[1:]) / path.name
-            enum = class_to_enum[name]
 
-            names.append(name)
+            class_names.append(domain)
             paths.append(path)
             enums.append(enum)
 
     df = pd.DataFrame(data={
         'path': np.array(paths),
-        'class_name': np.array(names),
+        'class_name': np.array(class_names),
         'class_enum': np.array(enums)
     })
     df_train, df_test = train_test_split(df, test_size=0.2)
-    return df_train, df_test
+
+    save_dir = Path(__file__).parent / 'split_domains' / 'files'
+    df_train.to_csv(save_dir / 'train.csv', index=False)
+    df_test.to_csv(save_dir / 'test.csv', index=False)
 
 
 def resize_and_save(im_path_src: Path,
@@ -77,3 +85,7 @@ def resize_images_recursively(src_dir: Path,
                         height=height,
                         width=width
                         )
+
+
+if __name__ == '__main__':
+    domains_tables_from_dir(Path('/data/sun/images/256_size'))
