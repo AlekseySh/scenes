@@ -150,8 +150,10 @@ class Trainer:
 
         mc = Calculator(gt=labels, pred=preds, score=confs)
         metrics = mc.calc()
-        ii_worst = mc.find_worst_mistakes(n_worst=5)
-        self.visualize_errors(ii_worst=ii_worst, labels_pred=preds[ii_worst])
+        ii_worst = mc.find_worst_mistakes(n_worst=8)
+        ii_best = mc.find_best_predicts(n_best=8)
+        self.visualize(ii_worst, preds[ii_worst], 'Worst_mistakes')
+        self.visualize(ii_best, preds[ii_best], 'Best_predicts')
         self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 
@@ -188,28 +190,30 @@ class Trainer:
         logger.info(f'Metric value with TTA: {acc_tta}')
         return max(acc_max, acc_tta)
 
-    def visualize_errors(self, ii_worst, labels_pred):
-        main_color = (0, 0, 0)
-        n_gt_samples, gt_color = 2, (0, 255, 0)
-        n_pred_samples, pred_color = 2, (255, 0, 0)
+    def visualize(self, indeces, labels_pred, board_tag):
+        base_color = (0, 0, 0)
+        gt_color = (0, 255, 0)
+        err_color = (255, 0, 0)
+        n_gt_samples, n_pred_samples = 2, 2
 
         name_to_enum = get_mapping('DomainToEnum')  # todo
 
         layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
 
-        for (ind, label_pred) in zip(ii_worst, labels_pred):
+        for (ind, label_pred) in zip(indeces, labels_pred):
             label_gt = self.test_set[ind]['label']
             name_gt = beutify_name(name_to_enum.inv[label_gt])
             name_pred = beutify_name(name_to_enum.inv[label_pred])
 
             main_img = self.test_set.get_signed_image(idx=ind,
                                                       text=[f'pred: {name_pred}', f'gt: {name_gt}'],
-                                                      color=main_color
+                                                      color=base_color
                                                       )
 
             gt_imgs = self.test_set.draw_class_samples(
                 n_samples=n_gt_samples, label=int(label_gt), color=gt_color)
 
+            pred_color = gt_color if label_gt == label_pred else err_color
             pred_imgs = self.test_set.draw_class_samples(
                 n_samples=n_pred_samples, label=int(label_pred), color=pred_color)
 
@@ -222,4 +226,4 @@ class Trainer:
                                 scale_each=True
                                 )
 
-        self.writer.add_image('Worst_mistakes', grid, self.i_global)
+        self.writer.add_image(img_tensor=grid, global_step=self.i_global, tag=board_tag)

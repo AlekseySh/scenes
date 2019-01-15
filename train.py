@@ -74,7 +74,7 @@ def get_parser():
                         )
     parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
-    parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=100)
+    parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=5)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
     parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)

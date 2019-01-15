@@ -19,8 +19,15 @@ class Calculator:
         }
         return metrics
 
-    def find_worst_mistakes(self, n_worst: int):
+    def find_worst_mistakes(self, n_worst: int) -> np.ndarray:
         ii_mistakes = np.nonzero(self.pred != self.gt)[0]
         probs = self.score[ii_mistakes]
         ii_worst = ii_mistakes[np.argsort(probs)][-n_worst:]
         return ii_worst
+
+    def find_best_predicts(self, n_best: int) -> np.ndarray:
+        # todo refactor with prev func
+        ii_correct = np.nonzero(self.pred == self.gt)[0]
+        probs = self.score[ii_correct]
+        ii_best = ii_correct[np.argsort(probs)][-n_best:]
+        return ii_best
