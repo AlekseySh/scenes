@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from data.common import resize_images_recursively
+from sun_data.common import resize_images_recursively
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

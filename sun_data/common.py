@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 from matplotlib import image as mpimg
 from scipy.misc import imresize
+from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from data.getters import get_name_to_enum
+from sun_data.getters import get_name_to_enum
 
 
 def table_from_split_file(file_path: Path):
@@ -17,7 +18,7 @@ def table_from_split_file(file_path: Path):
     enums, names, paths = [], [], []
     for path in paths_raw:
         class_name = str(Path(path).parent)
-        paths.append(path[1:])
+        paths.append(path[1:])  # del '/' from name
         names.append(class_name)
         enums.append(class_to_enum[class_name])
 
@@ -30,15 +31,15 @@ def table_from_split_file(file_path: Path):
     return df
 
 
-def table_from_directory(data_path: Path):
+def tables_from_dir(data_path: Path):
     class_to_enum = get_name_to_enum()
     names, paths, enums = [], [], []
     for name in class_to_enum.keys():
-        name = name[1:]  # remove first '/' in class name
-        class_fold = data_path / name
+
+        class_fold = data_path / name[1:]  # del '/' from name
 
         for path in list(class_fold.glob('*.jpg')):
-            path = Path(name) / path.name
+            path = Path(name[1:]) / path.name
             enum = class_to_enum[name]
 
             names.append(name)
@@ -50,7 +51,8 @@ def table_from_directory(data_path: Path):
         'class_name': np.array(names),
         'class_enum': np.array(enums)
     })
-    return df
+    df_train, df_test = train_test_split(df, test_size=0.2)
+    return df_train, df_test
 
 
 def resize_and_save(im_path_src: Path,

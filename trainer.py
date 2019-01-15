@@ -9,7 +9,8 @@ from torchvision import utils as vutils
 from tqdm import tqdm
 
 from common import OnlineAvg
-from data.getters import get_name_to_enum, _beutify_name
+from metrics import Calculator
+from sun_data.getters import get_name_to_enum, beutify_name
 from datasets import SIZE
 from model import Classifier
 
@@ -147,10 +148,10 @@ class Trainer:
             preds[i_start: i_stop] = pred
             confs[i_start: i_stop] = conf
 
-        mc = MetricsCalculator(gt=labels, pred=preds, score=confs)
+        mc = Calculator(gt=labels, pred=preds, score=confs)
         metrics = mc.calc()
         ii_worst = mc.find_worst_mistakes(n_worst=5)
-        self.visualize_errors(ii_worst=ii_worst, labels_pred=preds[ii_worst])
+        # self.visualize_errors(ii_worst=ii_worst, labels_pred=preds[ii_worst])
         self.writer.add_scalar('Accuracy', metrics['accuracy'], self.i_global)
         return metrics
 
@@ -198,8 +199,8 @@ class Trainer:
 
         for (ind, label_pred) in zip(ii_worst, labels_pred):
             label_gt = self.test_set[ind]['label']
-            name_gt = _beutify_name(name_to_enum.inv[label_gt])
-            name_pred = _beutify_name(name_to_enum.inv[label_pred])
+            name_gt = beutify_name(name_to_enum.inv[label_gt])
+            name_pred = beutify_name(name_to_enum.inv[label_pred])
 
             main_img = self.test_set.get_signed_image(idx=ind,
                                                       text=[f'pred: {name_pred}', f'gt: {name_gt}'],

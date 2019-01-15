@@ -1,12 +1,14 @@
-from collections import Counter
 from pathlib import Path
 
 import pandas as pd
 from nltk.corpus import wordnet as wn
+import json
+import numpy as np
 
-from data.getters import get_sun_names, get_sun_domains
+from sun_data.getters import get_names, get_domains
+from sklearn.preprocessing import LabelEncoder
 
-_save_path = Path(__file__).parent / 'files' / 'mappings.csv'
+_table_path = Path(__file__).parent / 'files' / 'mappings.csv'
 
 
 def synsets_from_names(names):
@@ -60,11 +62,11 @@ def synsets_to_words(synsets):
 
 
 def main():
-    raw_names = get_sun_names(need_beutify=False)
-    names = get_sun_names(need_beutify=True)
+    raw_names = get_names(need_beutify=False)
+    names = get_names(need_beutify=True)
     synsets = synsets_from_names(names)
     hypernyms = hypernyms_from_synsets(synsets)
-    domains = get_sun_domains()
+    domains = get_domains()
 
     data = {
         'raw_names': raw_names,
@@ -75,10 +77,18 @@ def main():
     }
 
     df = pd.DataFrame(data)
-    df.to_csv(_save_path, index=False)
+    df.to_csv(_table_path, index=False)
 
-    counter = Counter(df.domains)
-    print(sum(counter.values()) - 204)
+    w_exist = df['domains'].values != ''
+    domains_exist = df['domains'][w_exist]
+    enum_domains = LabelEncoder().fit_transform(domains_exist)
+    enum_domains = [int(domain) for domain in enum_domains]
+
+    name_to_enum = dict(zip(df['raw_names'][w_exist], enum_domains))
+
+    mapping_path = Path(__file__).parent / 'files' / 'NameToEnum.json'
+    with open(mapping_path, 'w') as j:
+        json.dump(fp=j, obj=name_to_enum)
 
 
 if __name__ == '__main__':

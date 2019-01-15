@@ -1,5 +1,6 @@
 import argparse
 import logging
+from datetime import datetime
 from pathlib import Path
 
 import torch
@@ -9,15 +10,17 @@ import torch.optim as optim
 from common import args_to_text
 from datasets import ImagesDataset as ImSet
 from model import Classifier
+from sun_data.getters import get_split_paths
 from trainer import Trainer, Stopper
 
 
 def main(args):
     # make folds
-    log_fold = args.work_dir / 'log'
-    ckpt_fold = args.work_dir / 'checkpoints'
-    board_fold = args.work_dir / 'board'
-    for fold in [args.work_dir, log_fold, ckpt_fold, board_fold]:
+    work_dir = args.work_root / str(datetime.now())
+    log_fold = work_dir / 'log'
+    ckpt_fold = work_dir / 'checkpoints'
+    board_fold = work_dir / 'board'
+    for fold in [work_dir, log_fold, ckpt_fold, board_fold]:
         fold.mkdir(exist_ok=True)
 
     # logging
@@ -28,12 +31,9 @@ def main(args):
     logger = logging.getLogger(__name__)
     logger.info(f'Params: \n{args_to_text(args)}')
 
-    train_set = ImSet(data_fold=args.data_path,
-                      csv_path=args.tables_dir / args.train_table
-                      )
-    test_set = ImSet(data_fold=args.data_path,
-                     csv_path=args.tables_dir / args.test_table
-                     )
+    train_csv, test_csv = get_split_paths(args.split_name)
+    train_set = ImSet(data_fold=args.data_path, csv_path=train_csv)
+    test_set = ImSet(data_fold=args.data_path, csv_path=test_csv)
 
     n_classes = train_set.get_num_classes()
     classifier = Classifier(args.arch, n_classes, args.pretrained)
@@ -46,7 +46,7 @@ def main(args):
     stopper = Stopper(args.n_stopper_obs, args.n_stopper_delta)
 
     trainer = Trainer(classifier=classifier,
-                      work_dir=args.work_dir,
+                      work_dir=work_dir,
                       train_set=train_set,
                       test_set=test_set,
                       batch_size=args.batch_size,
@@ -67,10 +67,12 @@ def main(args):
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_path', dest='data_path', type=Path)
-    parser.add_argument('-t', '--tables_dir', dest='tables_dir', type=Path)
-    parser.add_argument('-w', '--work_dir', dest='work_dir', type=Path)
+    parser.add_argument('-w', '--work_root', dest='work_root', type=Path)
     # with default values
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
+    parser.add_argument('--split', dest='split_name', type=str, default='domains',
+                        help='must be classic_01, classis_02 ... classic_10 or domains'
+                        )
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=100)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
@@ -79,8 +81,6 @@ def get_parser():
     parser.add_argument('--n_workers', dest='n_workers', type=int, default=6)
     parser.add_argument('--n_stopper_obs', dest='n_stopper_obs', type=int, default=5)
     parser.add_argument('--n_stopper_delta', dest='n_stopper_delta', type=float, default=0.005)
-    parser.add_argument('--train_table', dest='train_table', type=str, default='Training_01.csv')
-    parser.add_argument('--test_table', dest='test_table', type=str, default='Testing_01.csv')
     parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
     return parser
 
