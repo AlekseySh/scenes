@@ -6,3 +6,5 @@
 *.aux*
 *synctex.gz*
 *.log*
+*.toc*
+
