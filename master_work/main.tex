@@ -10,6 +10,8 @@
 \geometry{bottom=2cm}
 \linespread{1.3}
 
+\def\htag#1{\#\textit{#1}}  % short alias for hashtags
+
 \usepackage{graphicx}
 \graphicspath{{pic/}}
 \DeclareGraphicsExtensions{.png,.jpg}
@@ -19,7 +21,7 @@
 
 \begin{document}
 
-\include{title}
+\input{chapters/title}
 
 
 
@@ -30,15 +32,16 @@
 \newpage
 \section*{Введение}
 \addcontentsline{toc}{section}{\tocsecindent{Введение}}
-\input{intro} 
+\input{chapters/intro} 
 
 
 
 \newpage
 \section{Постановка задачи}
+\input{chapters/task_def}
 
 
-
+\newpage
 \section{Используемые инструменты}
 
 
