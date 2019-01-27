@@ -1,13 +1,269 @@
-\section{Подготовка данных}
+\section{Работа с данными}
 
 
 
-\subsection{База WordNet}
+\subsection{База семантических связей WordNet}
 
+\indent
+\indent
+Обсуждение подготовки данных наиболее логично начать с описания 
+\textit{WordNet'а}, который использовался и авторами датасета \textit{SUN},
+и автором настоящей работы. Составители датасета \textit{SUN} использовали
+\textit{WordNet} для отыскания иерархии названий сцен. А в настоящей работе
+он используется для обобщения названий сцен и для поиска синонимов
+к предлагаемым пользователю тегам.
+
+\indent
+...Описание...
+гиперонимы
+синсеты
 
 
 \subsection{Датасет SUN}
 
-
+\indent
+\indent
+Набор данных \textit{SUN (Scenes Understunding Dataset)} был впервые 
+представлен исследовательскому сообществу в 2010 году на 
+конференции CVPR, посвященной компьютерному зрению. Одновременно
+авторы опубликовали статью \cite{sundata}, в которой приводят различные
+статистики по датасету; описывают процесс сбора и разметки данных; 
+применяют к задаче распознавания сцен лучшией из имеющихся
+на тот момент методов. 
 
 \subsection{Адоптация датасета SUN}
+
+\indent
+\indent
+Как было сказано во введении, названия локаций (сцен) из датасета \textit{SUN} не 
+являются сами по себе популярными тегами из социальных сетей. Поэтому 
+прежде всего необходимо выполнить сопоставление. Условно можно
+разбить процедуру сопоставления на 2 части: объединение исходных классов 
+датасета \textit{SUN} в семантические домены и сопоставление полученных доменов
+с популярными хэштегами. В качестве источника хэштегов была выбрана социальная
+сеть \textit{Instagram} \footnote{www.instagram.com}, ориентированная на обмен фото
+и видео контентом между пользователями.
+
+\indent
+Итак, предварительно необходимо очистить названия классов \textit{SUN} от служебных
+слов и символов, таких как \textit{indoor, outdoor, exterier, interier}, знаков "/" и 
+однобуквенных алфавитных указателей. Затем для полученных слов или 
+словосочетаний подбирается соответсвующий синсет из базы знаний \textit{Wordnet}.
+Далее для синсетов находились гиперонимы, которые либо уже были достаточно
+абстрактны, чтобы представлять собой часто встречающийся тег, либо 
+автор работы находил для синсетов обобщающее понятие вручную.
+Несколько примеров приведено в таблице~\ref{tabular: mapping}.
+
+
+% Таблица о сопоставлении классов и тегов
+\begin{table}[ht!]
+    \begin{center}
+        \begin{tabular}{c | c| c | c | c}
+            \hline
+            № & Исходное название & Синсет & Гипероним & Хэштег \\
+            \hline
+    
+            1 & /s/shoe\_shop & shoe shop & shop & \htag{shopping} \\
+    
+            2 & /t/toyshop & toyshop & shop & \htag{shopping} \\
+   
+            3 & /v/volleyball\_court/indoor & volleyball court & court & \htag{sport} \\
+    
+            4 & /w/wrestling\_ring/indoor & wrestling ring & ring  & \htag{sport} \\
+    
+            5 & /r/rainforest & rain forest & forest & \htag{forest} \\
+            
+            6 & /p/pantry & pantry & storeroom & ? \\
+   
+            \hline
+        \end{tabular}
+    \end{center}
+    \caption{Сопоставление искомых классов и хэштегов.}
+    \label{tabular: mapping}
+\end{table}
+
+
+\indent
+Из таблицы~\ref{tabular: mapping} видно, что некоторые синсеты имеют общие
+гиперонимы. Кроме того, некоторые гиперонимы без каких-либо
+дополнительных изменений могли быть использованы пользователями в качестве 
+тегов. Таким образом, использование гиперонимов позволило немного уменьшить
+количество ручной работы. Так же в таблице~\ref{tabular: mapping} приведен пример,
+когда для локации сложно подобрать какой-то подходящий и широко распространенный
+тег.  В итоге использовалось около половины из  \textit{397}
+искомых классов датасета \textit{SUN}, каждому из которых удалось поставить
+в соответсвие один из \textit{20} популярных хэштегов. В данной работе 
+популярными считаются теги, использованные в сети
+\textit{Instagram} более \textit{10 млн.} раз. При этом среднее число упоминаний 
+отобранных тегов составило \textit{100 млн.} раз, а
+максимальное --- \textit{450 млн.}. Полная информация о частоте встречаемости
+для всех хэштегов приведена на рисунке ~\ref{tikzpicture: tags_counts}.
+
+
+% Гистограмма встречаемости хэштегов
+\begin{center}
+    \begin{figure}[ht!]
+    \begin{tikzpicture}
+    \label{tags_counts}
+        \begin{axis}[
+            ylabel = Число использований млн.,
+            x tick label style={rotate=90,anchor=east},
+            width = 0.7\paperwidth,
+            height = 0.4\paperheight,
+            symbolic x coords=
+            {
+                art,
+                nature,
+                beach,
+                sky,
+                home,
+                shopping,
+                artchitecture,
+                water,
+                sport,
+                street,
+                car,
+                cafe,
+                garden,
+                urban,
+                forest,
+                bar,
+                church,
+                building,
+                road,
+                airport,
+                entertainment,
+                science
+            },
+            xtick=data
+          ]
+            \addplot[ybar,fill=blue] coordinates {
+                (art, 450)
+                (nature, 390)
+                (beach, 210)
+                (sky, 190)
+                (home, 115)
+                (shopping, 100)
+                (artchitecture, 97)
+                (water, 65)
+                (sport, 60)
+                (street, 55)
+                (car, 55)
+                (cafe, 45)
+                (garden, 41)
+                (urban, 32)
+                (forest, 30)
+                (bar, 25)
+                (church, 25)
+                (building, 23)
+                (road, 17)
+                (airport, 14)
+                (entertainment, 10)
+                (science, 10)
+            };
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Встречаемость предсказываемых хэштегов в социальной сети \textit{Instagram}.}
+    \label{tikzpicture: tags_counts}
+    \end{figure}
+\end{center}
+
+
+
+\indent 
+Отметим, что автор предпринял несколько попыток произвести процедуру 
+адаптации разметки датасета \textit{SUN} полностью автоматически, 
+но они оказались неудачными. 
+
+
+\indent
+\indent
+Первая попытка --- обобщить искомые классы, используя метод \textit{topic\_domains},
+который доступен для синсетов в \textit{python} реализации API к 
+базе \textit{WordNet}. Например, для синсета
+\textit{basketball\_court.n.01}, который определяется как 
+\textit{the court on which basketball is played}, 
+вызов данного метода возвращает \textit{basketball.n.02}, который определяется так:
+\textit{a game played on a court by two opposing teams of 5 players;
+points are scored by throwing the ball through an elevated horizontal hoop}.
+К сожалению, проблема заключалась в том, что для подавляющего числа названий 
+локаций \textit{topic\_domains} возвращал пустое значение, т.е. для этих синсетов
+авторами базы знаний не было назначено доменов.
+
+
+\indent
+\indent
+Вторая попытка аналогичная первой, но использовалась сторонняя база знаний
+\textit{WordNet Domains}~\footnote{http://wndomains.fbk.eu/}. К сожалению, такое
+расширение базы доменов не позволило решить проблему, описанную выше.
+
+
+\indent
+\indent
+Третья идея заключась в использовании информации о семантической близости 
+синсетов, в частности, API \textit{WordNet'a} позволяет для любых двух синсетов
+вычислить степень похожести несколькими способами:
+\textit{jcn\_similarity, lch\_similarity, res\_similarity, wup\_similarity}.
+Для разных видов измерения расстояния были вычислены матрицы попарных дистанций,
+на основе которых производилась иерархическая кластеризация с различными
+гиперпараметрами
+ (например, класторизация по заданному максимальному расстоянию в кластере, 
+по заданному количеству кластеров). К сожалению, автору не удалось получить кластеры,
+большую часть которых можно было бы без труда "озаглавить" 
+каким-либо популярным хэштегом.
+
+
+\indent
+\indent
+Таким образом, процедуру сопоставления всех 
+\textit{397} искомых классов датасета \textit{SUN} и хэштегов из социальной сети \textit{Instagram}
+пришлось произвести в полуручном режиме (опираясь только на гиперонимы),
+как это было описано выше в данном разделе.
+
+
+\indent
+\indent
+Приведем пример такого сопастовления. В таблице \ref{tabular: sport_classes} 
+перечислены названия локаций, которым поставлен в соответсвие хэштег \htag{sport}:
+
+\begin{table}[ht!]
+    \begin{center}
+        \begin{tabular}{c | c | c}
+            /w/wrestling\_ring/indoor &
+            /a/athletic\_field/outdoor &
+            /b/badminton\_court/indoor
+            \\
+            /b/ball\_pit &
+            /b/baseball\_field &
+            /b/basketball\_court/outdoor
+            \\
+            /b/boxing\_ring &
+            /b/bullring &
+            /g/golf\_course
+            \\
+            /g/gymnasium/indoor &
+            /m/martial\_arts\_gym &
+            /r/racecourse
+            \\
+            /r/riding\_arena &
+            /s/ski\_lodge &
+            /s/ski\_resort
+            \\
+            /s/ski\_slope &
+            /s/squash\_court &
+            /s/stadium/baseball
+            \\
+            /s/stadium/football &
+            /s/swimming\_pool/indoor &
+            /s/swimming\_pool/outdoor
+            \\
+            /t/tennis\_court/indoor &
+            /t/tennis\_court/outdoor &
+            /v/volleyball\_court/indoor
+            \\
+            /v/volleyball\_court/outdoor          
+        \end{tabular}
+    \end{center}
+    \caption{Список классов датасета \textit{SUN}, которым сопоставлен хэштег \htag{sport}.}
+    \label{tabular: sport_classes}
+\end{table}

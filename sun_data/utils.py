@@ -25,6 +25,13 @@ def get_domains():
     return names
 
 
+def get_names():
+    file_path = _FILE_DIR / 'SunClassNames.txt'
+    with open(file_path, 'r') as f:
+        names = f.readlines()
+    return names
+
+
 def get_mapping(a_to_b: str):
     jpath = _FILE_DIR / f'{a_to_b}.json'
 
