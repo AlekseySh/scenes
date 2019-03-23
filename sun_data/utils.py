@@ -32,7 +32,7 @@ def get_names():
     return names
 
 
-def get_mapping(a_to_b: str):
+def get_mapping(a_to_b):
     jpath = _FILE_DIR / f'{a_to_b}.json'
 
     with open(jpath) as j:
@@ -57,9 +57,12 @@ def get_split_csv_paths(split_name):
         train_csv_path = _FILE_DIR / 'split_classic' / train_name
         test_csv_path = _FILE_DIR / 'split_classic' / test_name
 
-    else:
+    elif 'domains' == split_name:
         train_csv_path = _FILE_DIR / 'split_domains' / 'train.csv'
         test_csv_path = _FILE_DIR / 'split_domains' / 'test.csv'
+
+    else:
+        raise ValueError(f'Unexpected split type {split_name}.')
 
     return train_csv_path, test_csv_path
 

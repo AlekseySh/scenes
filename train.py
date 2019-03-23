@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from common import args_to_text
+from common import beutify_args
 from datasets import ImagesDataset as ImSet
 from model import Classifier
 from sun_data.utils import get_split_csv_paths
@@ -29,7 +29,7 @@ def main(args):
     sh = logging.StreamHandler()
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
     logger = logging.getLogger(__name__)
-    logger.info(f'Params: \n{args_to_text(args)}')
+    logger.info(f'Params: \n{beutify_args(args)}')
 
     train_csv, test_csv = get_split_csv_paths(args.split_name)
     train_set = ImSet(data_fold=args.data_path, csv_path=train_csv)
@@ -68,11 +68,12 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_path', dest='data_path', type=Path)
     parser.add_argument('-w', '--work_root', dest='work_root', type=Path)
+
     # with default values
-    parser.add_argument('--split', dest='split_name', type=str, default='domains',
+    parser.add_argument('--split', dest='split_name', type=str, default='classic_01',
                         help='must be classic_01, classis_02 ... classic_10 or domains'
                         )
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=5)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)

@@ -75,7 +75,7 @@ class Trainer:
 
         self.i_global = 0
         self.best_ckpt_path = self.work_dir / 'checkpoints' / 'best.pth.tar'
-        self.writer = SummaryWriter(self.work_dir / 'board')
+        self.writer = SummaryWriter(str(self.work_dir / 'board'))
 
         self.classifier.model.to(self.device)
 
@@ -196,7 +196,7 @@ class Trainer:
         err_color = (255, 0, 0)
         n_gt_samples, n_pred_samples = 2, 2
 
-        name_to_enum = get_mapping('DomainToEnum')  # todo
+        name_to_enum = get_mapping('NameToEnum')  # todo
 
         layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
 

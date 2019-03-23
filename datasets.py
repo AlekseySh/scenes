@@ -6,9 +6,10 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as t
-from sun_data.utils import beutify_name
-from common import put_text_to_image
 from torch.utils.data import Dataset
+
+from common import put_text_to_image
+from sun_data.utils import beutify_name
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)

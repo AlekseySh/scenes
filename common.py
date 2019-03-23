@@ -1,10 +1,10 @@
+from typing import List
+
 import cv2
 import numpy as np
 
-from typing import List
 
-
-def args_to_text(args):
+def beutify_args(args):
     text = ''
     for arg in vars(args):
         string = f'{arg}: {getattr(args, arg)} \n'
@@ -17,7 +17,6 @@ def put_text_to_image(image: np.ndarray,
                       str_height: int = 25,
                       color: List[int] = (0, 0, 0),
                       ) -> np.ndarray:
-
     image = image.astype(np.uint8)
 
     for i, string in enumerate(strings):
@@ -41,5 +40,3 @@ class OnlineAvg:
     def update(self, new_x):
         self.n += 1
         self.avg = (self.avg * (self.n - 1) + new_x) / self.n
-
-

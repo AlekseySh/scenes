@@ -26,7 +26,6 @@ class Calculator:
         return ii_worst
 
     def find_best_predicts(self, n_best: int) -> np.ndarray:
-        # todo refactor with prev func
         ii_correct = np.nonzero(self.pred == self.gt)[0]
         probs = self.score[ii_correct]
         ii_best = ii_correct[np.argsort(probs)][-n_best:]
