@@ -50,8 +50,8 @@ class ImagesDataset(Dataset):
         image = np.array(self.__read_pil_image(idx))
         image = put_text_to_image(image, strings=text, color=color)
         image = t.ToTensor()(image)
-        image = torch.tensor(255 * image, dtype=torch.uint8)
-        return image
+        image_tensor = torch.tensor(255 * image, dtype=torch.uint8)
+        return image_tensor
 
     def draw_class_samples(self, n_samples, label, color):
         layout = torch.zeros([n_samples, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)

@@ -42,8 +42,6 @@ def xml_to_mask(xml_content: str,
     data = xmltodict.parse(xml_content)
 
     folder = Path(data['annotation']['folder'])
-    # height = int(data['annotation']['imagesize']['nrows'])
-    # width = int(data['annotation']['imagesize']['ncols'])
 
     masks, labels = [], []
     for obj in data['annotation']['object']:

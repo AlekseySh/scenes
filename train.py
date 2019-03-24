@@ -10,6 +10,7 @@ import torch.optim as optim
 from common import beutify_args
 from datasets import ImagesDataset as ImSet
 from model import Classifier
+from sun_data.common import get_mapping
 from sun_data.utils import get_split_csv_paths
 from trainer import Trainer, Stopper
 
@@ -45,10 +46,16 @@ def main(args):
 
     stopper = Stopper(args.n_stopper_obs, args.n_stopper_delta)
 
+    if 'classic' in args.split_name:
+        name_to_enum = get_mapping('NameToEnum')
+    else:
+        name_to_enum = get_mapping('DomainToEnum')
+
     trainer = Trainer(classifier=classifier,
                       work_dir=work_dir,
                       train_set=train_set,
                       test_set=test_set,
+                      name_to_enum=name_to_enum,
                       batch_size=args.batch_size,
                       n_workers=args.n_workers,
                       criterion=criterion,
@@ -71,7 +78,7 @@ def get_parser():
 
     # with default values
     parser.add_argument('--split', dest='split_name', type=str, default='classic_01',
-                        help='must be classic_01, classis_02 ... classic_10 or domains'
+                        help='must be <classic_01>, <classis_02> ... <classic_10> or <domains>'
                         )
     parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')

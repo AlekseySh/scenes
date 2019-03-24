@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from bidict import bidict
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, Dataset
 from torchvision import utils as vutils
@@ -12,7 +13,7 @@ from common import OnlineAvg
 from datasets import SIZE
 from metrics import Calculator
 from model import Classifier
-from sun_data.utils import get_mapping, beutify_name
+from sun_data.utils import beutify_name
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ class Trainer:
                  work_dir: Path,
                  train_set: Dataset,
                  test_set: Dataset,
+                 name_to_enum: bidict,
                  batch_size: int,
                  n_workers: int,
                  criterion,
@@ -66,6 +68,7 @@ class Trainer:
         self.work_dir = work_dir
         self.train_set = train_set
         self.test_set = test_set
+        self.name_to_enum = name_to_enum
         self.batch_size = batch_size
         self.n_workers = n_workers
         self.criterion = criterion
@@ -196,14 +199,12 @@ class Trainer:
         err_color = (255, 0, 0)
         n_gt_samples, n_pred_samples = 2, 2
 
-        name_to_enum = get_mapping('NameToEnum')  # todo
-
         layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
 
         for (ind, label_pred) in zip(indeces, labels_pred):
             label_gt = self.test_set[ind]['label']
-            name_gt = beutify_name(name_to_enum.inv[label_gt])
-            name_pred = beutify_name(name_to_enum.inv[label_pred])
+            name_gt = beutify_name(self.name_to_enum.inv[label_gt])
+            name_pred = beutify_name(self.name_to_enum.inv[label_pred])
 
             main_img = self.test_set.get_signed_image(idx=ind,
                                                       text=[f'pred: {name_pred}', f'gt: {name_gt}'],
