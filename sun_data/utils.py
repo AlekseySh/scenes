@@ -1,94 +1,147 @@
-import json
+from enum import Enum
 from pathlib import Path
+from typing import List, Tuple, Dict
 
-import numpy as np
+import pandas as pd
 from bidict import bidict
-from sklearn.preprocessing import LabelEncoder
 
-_SUN_SPECIAL_WORDS = ['indoor', 'outdoor', 'exterior', 'interior']
-_FILE_DIR = Path(__file__).parent / 'files'
+__all__ = ['DataMode', 'load_data', 'get_sun_names', 'beutify_name']
 
+FILES_DIR = Path(__file__).parent / 'files'
+SPLITS_DIR = FILES_DIR / 'splits'
 
-def beutify_name(sun_name):
-    name = Path(sun_name).name
-    if name in _SUN_SPECIAL_WORDS:
-        name = Path(sun_name).parent.name
-    return name
+TLabeled = Tuple[List[Path], List[str]]
 
 
-def get_domains():
-    file_path = _FILE_DIR / 'SunClassDomains.txt'
+class DataMode(Enum):
+    CLASSIC_01 = 'classic_01'
+    CLASSIC_02 = 'classic_02'
+    CLASSIC_03 = 'classic_03'
+    CLASSIC_04 = 'classic_04'
+    CLASSIC_05 = 'classic_05'
+    CLASSIC_06 = 'classic_06'
+    CLASSIC_07 = 'classic_07'
+    CLASSIC_08 = 'classic_08'
+    CLASSIC_09 = 'classic_09'
+    CLASSIC_10 = 'classic_10'
+    TAGS = 'tags'
+
+
+def get_classic_modes() -> List[DataMode]:
+    classic_list = [DataMode(f'classic_0{i}') for i in range(1, 10)]
+    classic_list.append(DataMode('classic_10'))
+    return classic_list
+
+
+def load_data(mode: DataMode) -> Tuple[TLabeled, TLabeled, bidict]:
+    train_paths, test_paths = get_split(mode=mode)
+    train_names = names_from_paths(train_paths, mode=mode)
+    test_names = names_from_paths(test_paths, mode=mode)
+
+    train_data = train_paths, train_names
+    test_data = test_paths, test_names
+
+    name_to_enum = get_name_to_enum(mode)
+    return train_data, test_data, name_to_enum
+
+
+# SPLITS
+
+def load_file(file_path: Path) -> List[Path]:
     with open(file_path, 'r') as f:
-        names = f.readlines()
+        lines = f.readlines()
+    paths = [Path(line[:-1]) for line in lines]  # remove \n
+    return paths
 
-    names = [name.replace('\n', '') for name in names]
+
+def get_split(mode: DataMode) -> Tuple[List[Path], List[Path]]:
+    classic_modes = get_classic_modes()
+
+    if mode == DataMode.TAGS:
+        train_paths, test_paths = [], []
+        for cur_mode in classic_modes:
+            train_paths_cur, test_paths_cur = get_split(cur_mode)
+            train_paths.extend(train_paths_cur)
+            test_paths.extend(test_paths_cur)
+
+            # remove dublicated paths
+            train_paths = list(set(train_paths))
+            test_paths = list(set(test_paths))
+
+    elif mode in classic_modes:
+        train_paths, test_paths = get_split_classic(mode)
+
+    else:
+        raise ValueError(f'Unexpected data mode {mode}.')
+
+    return train_paths, test_paths
+
+
+def get_split_classic(mode: DataMode) -> Tuple[List[Path], List[Path]]:
+    assert mode in get_classic_modes()
+
+    split_num = str(mode).split('_')[-1]
+    train_paths = load_file(SPLITS_DIR / f'Training_{split_num}.txt')
+    test_paths = load_file(SPLITS_DIR / f'Testing_{split_num}.txt')
+    return train_paths, test_paths
+
+
+# MAPPINGS
+
+def names_from_paths(im_paths: List[Path], mode: DataMode) -> List[str]:
+    sun_names = [str(im_path.parent) for im_path in im_paths]
+    if mode in get_classic_modes():
+        names = sun_names
+
+    elif mode == mode.TAGS:
+        sun_to_tag = get_sun_to_tags_mapping()
+        names = [sun_to_tag[name] for name in sun_names]
+
+    else:
+        raise ValueError(f'Unexpected mode {mode}.')
+
     return names
 
 
-def get_names():
-    file_path = _FILE_DIR / 'SunClassNames.txt'
-    with open(file_path, 'r') as f:
-        names = f.readlines()
-    return names
+def get_sun_names(need_beutify: bool = False) -> List[Path]:
+    sun_names = load_file(FILES_DIR / 'SunClassNames.txt')
+    if need_beutify:
+        sun_names = [Path(beutify_name(name)) for name in sun_names]
+    return sun_names
 
 
-def get_mapping(a_to_b):
-    jpath = _FILE_DIR / f'{a_to_b}.json'
+def get_name_to_enum(mode: DataMode) -> bidict:
+    if mode in get_classic_modes():
+        sun_classes = get_sun_names()
+        name_to_enum = bidict({name: i for i, name in enumerate(sun_classes)})
 
-    with open(jpath) as j:
-        name_to_enum = bidict(json.load(j))
+    elif mode == DataMode.TAGS:
+        sun_to_tags = get_sun_to_tags_mapping()
+        tags = set(sun_to_tags.values())
+        name_to_enum = bidict({tag: i for i, tag in enumerate(tags)})
+
+    else:
+        raise ValueError(f'Unexpected mode {mode}.')
 
     return name_to_enum
 
 
-def get_split_csv_paths(split_name):
-    """
-
-    :param split_name: must be 'classic_01', 'classis_02' ... 'classic_10
-                       or 'domains'
-
-    :return: paths to tables for training and testing
-    """
-    assert 'classic' in split_name or split_name == 'domains'
-
-    if 'classic' in split_name:
-        i_split = split_name.split('_')[-1]
-        train_name, test_name = f'Training_{i_split}.csv', f'Testing_{i_split}.csv'
-        train_csv_path = _FILE_DIR / 'split_classic' / train_name
-        test_csv_path = _FILE_DIR / 'split_classic' / test_name
-
-    elif 'domains' == split_name:
-        train_csv_path = _FILE_DIR / 'split_domains' / 'train.csv'
-        test_csv_path = _FILE_DIR / 'split_domains' / 'test.csv'
-
-    else:
-        raise ValueError(f'Unexpected split type {split_name}.')
-
-    return train_csv_path, test_csv_path
+def get_sun_to_tags_mapping() -> Dict[str, str]:
+    df = pd.read_csv(FILES_DIR / 'mapping.csv')
+    sun_to_tag = {}
+    for (sun_class, tag) in zip(df['raw_names'], df['tags']):
+        tag = 'other' if pd.isna(tag) else tag
+        sun_to_tag.update({sun_class: tag})
+    return sun_to_tag
 
 
-def save_domains_mappings():
-    raw_names = np.array(get_names(need_beutify=False))
-    domains = np.array(get_domains())
+# RANDOM
 
-    w_exist = domains != ''
-    domains_exist = domains[w_exist]
-
-    # name to domain
-    name_to_domain = dict(zip(raw_names[w_exist], domains_exist))
-    name_to_domain_path = _FILE_DIR / 'NameToDomain.json'
-
-    with open(name_to_domain_path, 'w') as j:
-        json.dump(fp=j, obj=name_to_domain)
-
-    # domain to enum
-    enum_domains = LabelEncoder().fit_transform(domains_exist).tolist()
-    domain_to_enum = dict(zip(domains_exist, enum_domains))
-    domain_to_enum_path = _FILE_DIR / 'DomainToEnum.json'
-
-    with open(domain_to_enum_path, 'w') as j:
-        json.dump(fp=j, obj=domain_to_enum)
-
-
-if __name__ == '__main__':
-    save_domains_mappings()
+def beutify_name(sun_name: Path) -> str:
+    sun_special_words = [
+        'indoor', 'outdoor', 'exterior', 'interior'
+    ]
+    beutified_name = sun_name.name
+    if str(beutified_name) in sun_special_words:
+        beutified_name = sun_name.parent.name
+    return beutified_name

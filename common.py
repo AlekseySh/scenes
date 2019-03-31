@@ -1,9 +1,19 @@
+import random
 from argparse import Namespace
 from typing import List, Tuple, Union
 
 import cv2
 import numpy as np
+import torch
 from torch import Tensor
+
+
+def fix_seed(seed: int = 0) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def beutify_args(args: Namespace) -> str:

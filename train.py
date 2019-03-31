@@ -6,11 +6,10 @@ from typing import Tuple
 
 import torch
 
-from common import beutify_args, Stopper
-from datasets import ImagesDataset as ImSet
+from common import beutify_args, Stopper, fix_seed
+from datasets import ImagesDataset
 from network import Classifier
-from sun_data.common import get_mapping
-from sun_data.utils import get_split_csv_paths
+from sun_data.utils import DataMode, load_data
 from trainer import Trainer
 
 logger = logging.getLogger(__name__)
@@ -20,22 +19,26 @@ def main(args: Namespace) -> float:
     board_dir, ckpt_dir = setup_logging(args.log_dir)
     logger.info(f'Params: \n{beutify_args(args)}')
 
-    train_csv, test_csv = get_split_csv_paths(args.split_name)
-    train_set = ImSet(data_fold=args.data_path, csv_path=train_csv)
-    test_set = ImSet(data_fold=args.data_path, csv_path=test_csv)
+    fix_seed(args.seed)
 
-    n_classes = train_set.get_num_classes()
+    (train_paths, train_names), (test_paths, test_names), name_to_label = \
+        load_data(args.data_mode)
+
+    train_labels = [name_to_label[name] for name in train_names]
+    test_labels = [name_to_label[name] for name in test_names]
+
+    train_set = ImagesDataset(args.data_root, train_paths, train_labels)
+    test_set = ImagesDataset(args.data_root, test_paths, test_labels)
+
+    n_classes = len(name_to_label)
+    logger.info(f'Number of classes: {n_classes}.')
+
     classifier = Classifier(args.arch, n_classes, args.pretrained)
-    stopper = Stopper(args.n_stopper_obs, args.n_stopper_delta)
-
-    if 'classic' in args.split_name:
-        name_to_enum = get_mapping('NameToEnum')
-    else:
-        name_to_enum = get_mapping('DomainToEnum')
+    stopper = Stopper(n_obs=args.n_stopper_obs, delta=args.n_stopper_delta)
 
     trainer = Trainer(classifier=classifier, board_dir=board_dir,
                       train_set=train_set, test_set=test_set,
-                      name_to_enum=name_to_enum, device=args.device,
+                      name_to_enum=name_to_label, device=args.device,
                       batch_size=args.batch_size)
 
     max_metric = trainer.train(n_max_epoch=args.n_max_epoch, test_freq=args.test_freq,
@@ -59,23 +62,27 @@ def setup_logging(log_dir: Path) -> Tuple[Path, Path]:
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser()
-    parser.add_argument('-d', '--data_path', dest='data_path', type=Path)
+    parser.add_argument('-d', '--data_root', dest='data_root', type=Path)
     parser.add_argument('-w', '--log_dir', dest='log_dir', type=Path)
 
-    # with default values
-    parser.add_argument('--split', dest='split_name', type=str, default='classic_01',
-                        help='must be <classic_01>, <classis_02> ... <classic_10> or <domains>'
-                        )
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:1')
+    parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
+                        default=DataMode.TAGS, help=f'One mode from {DataMode}.')
+
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
+    parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=5)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
     parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)
     parser.add_argument('--n_workers', dest='n_workers', type=int, default=6)
-    parser.add_argument('--n_stopper_obs', dest='n_stopper_obs', type=int, default=5)
-    parser.add_argument('--n_stopper_delta', dest='n_stopper_delta', type=float, default=0.005)
-    parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:1')
+    parser.add_argument('--random_seed', dest='seed', type=int, default=42)
+
+    parser.add_argument('--n_stopper_obs', dest='n_stopper_obs', type=int, default=5,
+                        help='Number of epochs without metrics improving before stop.')
+    parser.add_argument('--n_stopper_delta', dest='n_stopper_delta', type=float,
+                        default=0.005, help='We assume that the metric improved only'
+                                            'if it increased by a delta.')
     return parser
 
 

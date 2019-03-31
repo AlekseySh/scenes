@@ -127,10 +127,10 @@ class Trainer:
 
         mc = Calculator(gts=labels, preds=preds, confidences=confs)
         metrics = mc.calc()
-        ii_worst = mc.find_worst_mistakes(n_worst=8)
-        ii_best = mc.find_best_predicts(n_best=8)
-        self.visualize(ii_worst, preds[ii_worst], 'Worst_mistakes')
-        self.visualize(ii_best, preds[ii_best], 'Best_predicts')
+        # ii_worst = mc.find_worst_mistakes(n_worst=8)
+        # ii_best = mc.find_best_predicts(n_best=8)
+        # self.visualize(ii_worst, preds[ii_worst], 'Worst_mistakes')
+        # self.visualize(ii_best, preds[ii_best], 'Best_predicts')
         self._writer.add_scalar('Accuracy', metrics['accuracy'], self._i_global)
         return metrics
 
@@ -159,7 +159,7 @@ class Trainer:
 
                 if acc > acc_max:
                     acc_max, best_epoch = acc, i
-                    self._classifier.save(best_ckpt_path, meta={'acc': acc})
+                    self._classifier.save(best_ckpt_path, meta={'accuracy': acc})
 
                 stopper.update(acc)
                 if stopper.check_criterion():

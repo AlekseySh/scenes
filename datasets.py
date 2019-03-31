@@ -21,17 +21,20 @@ logger.info(f'Using image size: {SIZE}')
 
 
 class ImagesDataset(Dataset):
+    _data_root: Path
     _im_paths: List[Path]
     _labels: List[int]
     _transforms: t.Compose
 
     def __init__(self,
+                 data_root: Path,
                  im_paths: List[Path],
                  labels: List[int]
                  ):
         assert len(im_paths) == len(labels)
 
         super().__init__()
+        self._data_root = data_root
         self._im_paths = im_paths
         self._labels = labels
         self._transforms = None
@@ -40,14 +43,15 @@ class ImagesDataset(Dataset):
         assert self._transforms is not None
 
         im_path, label = self._im_paths[idx], self._labels[idx]
-        im_tensor = self.transforms(_read_pil(im_path))
+
+        if str(im_path).startswith('/'):
+            im_path = Path(str(im_path)[1:])
+
+        im_tensor = self._transforms(_read_pil(self._data_root / im_path))
         return im_tensor, label
 
     def __len__(self) -> int:
         return len(self._im_paths)
-
-    def get_num_classes(self) -> int:
-        return len(set(self._labels))
 
     def set_default_transforms(self) -> None:
         self._transforms = get_default_transforms()

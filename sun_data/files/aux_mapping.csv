@@ -1,0 +1,398 @@
+raw_names,names,synsets,hypernyms
+/a/abbey,abbey,abbey,church
+/a/airplane_cabin,airplane_cabin, , 
+/a/airport_terminal,airport_terminal,air_terminal,terminal
+/a/alley,alley,alley,street
+/a/amphitheater,amphitheater,amphitheater,gallery
+/a/amusement_arcade,amusement_arcade,amusement_arcade,arcade
+/a/amusement_park,amusement_park,amusement_park,park
+/a/anechoic_chamber,anechoic_chamber,anechoic_chamber,room
+/a/apartment_building/outdoor,apartment_building,apartment_building,building
+/a/apse/indoor,apse,apse,recess
+/a/aquarium,aquarium,aquarium,tank
+/a/aqueduct,aqueduct,aqueduct,conduit
+/a/arch,arch,arch,curve
+/a/archive,archive,archive,depository
+/a/arrival_gate/outdoor,arrival_gate,arrival_gate,gate
+/a/art_gallery,art_gallery,gallery,room
+/a/art_school,art_school,art_school,conservatory
+/a/art_studio,art_studio, , 
+/a/assembly_line,assembly_line,production_line,mechanical_system
+/a/athletic_field/outdoor,athletic_field,playing_field,tract
+/a/atrium/public,public,populace,people
+/a/attic,attic,loft,floor
+/a/auditorium,auditorium,auditorium,area
+/a/auto_factory,auto_factory,automobile_factory,factory
+/b/badlands,badlands,badlands,land
+/b/badminton_court/indoor,badminton_court,badminton_court,court
+/b/baggage_claim,baggage_claim,baggage_claim,area
+/b/bakery/shop,shop,shop,mercantile_establishment
+/b/balcony/exterior,balcony,balcony,structure
+/b/balcony/interior,balcony,balcony,structure
+/b/ball_pit,ball_pit, , 
+/b/ballroom,ballroom,ballroom,room
+/b/bamboo_forest,bamboo_forest, , 
+/b/banquet_hall,banquet_hall, , 
+/b/bar,bar,barroom,room
+/b/barn,barn,barn,farm_building
+/b/barndoor,barndoor,barndoor,flap
+/b/baseball_field,baseball_field,ball_field,playing_field
+/b/basement,basement,basement,floor
+/b/basilica,basilica,basilica,church
+/b/basketball_court/outdoor,basketball_court,basketball_court,court
+/b/bathroom,bathroom,bathroom,room
+/b/batters_box,batters_box, , 
+/b/bayou,bayou,bayou,lake
+/b/bazaar/indoor,bazaar,bazaar,shop
+/b/bazaar/outdoor,bazaar,bazaar,shop
+/b/beach,beach,beach,geological_formation
+/b/beauty_salon,beauty_salon,salon,shop
+/b/bedroom,bedroom,bedroom,room
+/b/berth,berth,position,occupation
+/b/biology_laboratory,biology_laboratory,biology_lab,lab
+/b/bistro/indoor,bistro,bistro,restaurant
+/b/boardwalk,boardwalk,boardwalk,walk
+/b/boat_deck,boat_deck,boat_deck,upper_deck
+/b/boathouse,boathouse,boathouse,shed
+/b/bookstore,bookstore,bookshop,shop
+/b/booth/indoor,booth,booth,table
+/b/botanical_garden,botanical_garden,arboretum,facility
+/b/bow_window/indoor,bow_window,bay_window,window
+/b/bow_window/outdoor,bow_window,bay_window,window
+/b/bowling_alley,bowling_alley,bowling_alley,building
+/b/boxing_ring,boxing_ring,boxing_ring,ring
+/b/brewery/indoor,brewery,brewery,plant
+/b/bridge,bridge,bridge,structure
+/b/building_facade,building_facade, , 
+/b/bullring,bullring,bullring,stadium
+/b/burial_chamber,burial_chamber,burial_chamber,chamber
+/b/bus_interior,bus_interior, , 
+/b/butchers_shop,butchers_shop, , 
+/b/butte,butte,butte,hill
+/c/cabin/outdoor,cabin,cabin,compartment
+/c/cafeteria,cafeteria,cafeteria,restaurant
+/c/campsite,campsite,campsite,site
+/c/campus,campus,campus,field
+/c/canal/natural,natural,natural,achiever
+/c/canal/urban,urban,urban, 
+/c/candy_store,candy_store,confectionery,shop
+/c/canyon,canyon,canyon,ravine
+/c/car_interior/backseat,backseat,backseat,inferiority
+/c/car_interior/frontseat,frontseat, , 
+/c/carrousel,carrousel,carousel,conveyer_belt
+/c/casino/indoor,casino,casino,gambling_house
+/c/castle,castle,palace,mansion
+/c/catacomb,catacomb,catacomb,tunnel
+/c/cathedral/indoor,cathedral,cathedral,church
+/c/cathedral/outdoor,cathedral,cathedral,church
+/c/cavern/indoor,cavern,cavern,enclosure
+/c/cemetery,cemetery,cemetery,site
+/c/chalet,chalet,chalet,house
+/c/cheese_factory,cheese_factory, , 
+/c/chemistry_lab,chemistry_lab,chemistry_lab,lab
+/c/chicken_coop/indoor,chicken_coop,chicken_coop,farm_building
+/c/chicken_coop/outdoor,chicken_coop,chicken_coop,farm_building
+/c/childs_room,childs_room, , 
+/c/church/indoor,church,church,religion
+/c/church/outdoor,church,church,religion
+/c/classroom,classroom,classroom,room
+/c/clean_room,clean_room,clean_room,room
+/c/cliff,cliff,cliff,geological_formation
+/c/cloister/indoor,cloister,religious_residence,residence
+/c/closet,closet,cupboard,storage_space
+/c/clothing_store,clothing_store,clothing_store,shop
+/c/coast,coast,seashore,shore
+/c/cockpit,cockpit,cockpit,compartment
+/c/coffee_shop,coffee_shop,cafe,restaurant
+/c/computer_room,computer_room, , 
+/c/conference_center,conference_center,conference_center,center
+/c/conference_room,conference_room,conference_room,room
+/c/construction_site,construction_site, , 
+/c/control_room,control_room,control_room,room
+/c/control_tower/outdoor,control_tower,control_tower,tower
+/c/corn_field,corn_field,cornfield,grainfield
+/c/corral,corral,cow_pen,pen
+/c/corridor,corridor,corridor,passageway
+/c/cottage_garden,cottage_garden, , 
+/c/courthouse,courthouse,courthouse,government_building
+/c/courtroom,courtroom,court,room
+/c/courtyard,courtyard,court,area
+/c/covered_bridge/exterior,covered_bridge,covered_bridge,bridge
+/c/creek,creek,brook,stream
+/c/crevasse,crevasse,crevasse,crack
+/c/crosswalk,crosswalk,crossing,path
+/c/cubicle/office,office,office,place_of_business
+/d/dam,dam,dam,barrier
+/d/delicatessen,delicatessen,delicatessen,convenience_food
+/d/dentists_office,dentists_office, , 
+/d/desert/sand,sand,sand,soil
+/d/desert/vegetation,vegetation,vegetation,collection
+/d/diner/indoor,diner,diner,eater
+/d/diner/outdoor,diner,diner,eater
+/d/dinette/home,home,home,residence
+/d/dinette/vehicle,vehicle,vehicle,conveyance
+/d/dining_car,dining_car,dining_car,passenger_car
+/d/dining_room,dining_room,dining_room,room
+/d/discotheque,discotheque,disco,ballroom
+/d/dock,dock,dock,enclosure
+/d/doorway/outdoor,doorway,doorway,entrance
+/d/dorm_room,dorm_room,dormitory,bedroom
+/d/driveway,driveway,driveway,road
+/d/driving_range/outdoor,driving_range,golf_range,practice_range
+/d/drugstore,drugstore,drugstore,shop
+/e/electrical_substation,electrical_substation, , 
+/e/elevator/door,door,door,movable_barrier
+/e/elevator/interior,elevator,elevator,lifting_device
+/e/elevator_shaft,elevator_shaft,elevator_shaft,shaft
+/e/engine_room,engine_room,engineering,room
+/e/escalator/indoor,escalator,escalator_clause,article
+/e/excavation,excavation,excavation,creating_by_removal
+/f/factory/indoor,factory,factory,plant
+/f/fairway,fairway,fairway,site
+/f/fastfood_restaurant,fastfood_restaurant, , 
+/f/field/cultivated,cultivated,cultivate, 
+/f/field/wild,wild,wild,state
+/f/fire_escape,fire_escape,fire_escape,stairway
+/f/fire_station,fire_station,fire_station,station
+/f/firing_range/indoor,firing_range,firing_range,practice_range
+/f/fishpond,fishpond,fishpond,pond
+/f/florist_shop/indoor,florist_shop,florist,shop
+/f/food_court,food_court,food_court,court
+/f/forest/broadleaf,broadleaf,broadleaf, 
+/f/forest/needleleaf,needleleaf, , 
+/f/forest_path,forest_path, , 
+/f/forest_road,forest_road, , 
+/f/formal_garden,formal_garden,formal_garden,garden
+/f/fountain,fountain,fountain,structure
+/g/galley,galley,galley,vessel
+/g/game_room,game_room,rumpus_room,recreation_room
+/g/garage/indoor,garage,garage,outbuilding
+/g/garbage_dump,garbage_dump,dump,site
+/g/gas_station,gas_station,gasoline_station,service_station
+/g/gazebo/exterior,gazebo,gazebo,building
+/g/general_store/indoor,general_store,country_store,mercantile_establishment
+/g/general_store/outdoor,general_store,country_store,mercantile_establishment
+/g/gift_shop,gift_shop,gift_shop,shop
+/g/golf_course,golf_course,golf_course,course
+/g/greenhouse/indoor,greenhouse,greenhouse,building
+/g/greenhouse/outdoor,greenhouse,greenhouse,building
+/g/gymnasium/indoor,gymnasium,secondary_school,school
+/h/hangar/indoor,hangar,airdock,structure
+/h/hangar/outdoor,hangar,airdock,structure
+/h/harbor,harbor,seaport,port
+/h/hayfield,hayfield,hayfield,grassland
+/h/heliport,heliport,heliport,airport
+/h/herb_garden,herb_garden,herb_garden,garden
+/h/highway,highway,highway,road
+/h/hill,hill,hill,natural_elevation
+/h/home_office,home_office,home_office,ministry
+/h/hospital,hospital,hospital,medical_building
+/h/hospital_room,hospital_room,hospital_room,room
+/h/hot_spring,hot_spring,hot_spring,spring
+/h/hot_tub/outdoor,hot_tub,hot_tub,bathtub
+/h/hotel/outdoor,hotel,hotel,building
+/h/hotel_room,hotel_room,hotel_room,bedroom
+/h/house,house,house,building
+/h/hunting_lodge/outdoor,hunting_lodge,lodge,house
+/i/ice_cream_parlor,ice_cream_parlor, , 
+/i/ice_floe,ice_floe,ice_floe,ice_mass
+/i/ice_shelf,ice_shelf,shelf_ice,ice
+/i/ice_skating_rink/indoor,ice_skating_rink, , 
+/i/ice_skating_rink/outdoor,ice_skating_rink, , 
+/i/iceberg,iceberg,iceberg,floater
+/i/igloo,igloo,igloo,hovel
+/i/industrial_area,industrial_area, , 
+/i/inn/outdoor,inn,hostel,hotel
+/i/islet,islet,isle, 
+/j/jacuzzi/indoor,jacuzzi, , 
+/j/jail/indoor,jail,jail,correctional_institution
+/j/jail_cell,jail_cell,cell,room
+/j/jewelry_shop,jewelry_shop, , 
+/k/kasbah,kasbah,kasbah,quarter
+/k/kennel/indoor,kennel,kennel,outbuilding
+/k/kennel/outdoor,kennel,kennel,outbuilding
+/k/kindergarden_classroom,kindergarden_classroom, , 
+/k/kitchen,kitchen,kitchen,room
+/k/kitchenette,kitchenette,kitchenette,kitchen
+/l/labyrinth/outdoor,labyrinth,maze,system
+/l/lake/natural,natural,natural,achiever
+/l/landfill,landfill,landfill,lowland
+/l/landing_deck,landing_deck,flight_deck,deck
+/l/laundromat,laundromat,launderette,laundry
+/l/lecture_room,lecture_room,lecture_room,classroom
+/l/library/indoor,library,library,room
+/l/library/outdoor,library,library,room
+/l/lido_deck/outdoor,lido_deck,lido_deck,deck
+/l/lift_bridge,lift_bridge,drawbridge,bridge
+/l/lighthouse,lighthouse,beacon,tower
+/l/limousine_interior,limousine_interior, , 
+/l/living_room,living_room,living_room,room
+/l/lobby,lobby,anteroom,room
+/l/lock_chamber,lock_chamber,lock,enclosure
+/l/locker_room,locker_room,locker_room,room
+/m/mansion,mansion,sign_of_the_zodiac,region
+/m/manufactured_home,manufactured_home,mobile_home,housing
+/m/market/indoor,market,market,activity
+/m/market/outdoor,market,market,activity
+/m/marsh,marsh,marsh,wetland
+/m/martial_arts_gym,martial_arts_gym, , 
+/m/mausoleum,mausoleum,mausoleum,burial_chamber
+/m/medina,medina,medina, 
+/m/moat/water,water,water,binary_compound
+/m/monastery/outdoor,monastery,monastery,religious_residence
+/m/mosque/indoor,mosque,mosque,place_of_worship
+/m/mosque/outdoor,mosque,mosque,place_of_worship
+/m/motel,motel,motel,motor_hotel
+/m/mountain,mountain,mountain,natural_elevation
+/m/mountain_snowy,mountain_snowy, , 
+/m/movie_theater/indoor,movie_theater,cinema,theater
+/m/museum/indoor,museum,museum,depository
+/m/music_store,music_store, , 
+/m/music_studio,music_studio, , 
+/n/nuclear_power_plant/outdoor,nuclear_power_plant, , 
+/n/nursery,nursery,nursery,child's_room
+/o/oast_house,oast_house,oast_house,house
+/o/observatory/outdoor,observatory,observatory,building
+/o/ocean,ocean,ocean,body_of_water
+/o/office,office,office,place_of_business
+/o/office_building,office_building,office_building,building
+/o/oil_refinery/outdoor,oil_refinery,oil_refinery,refinery
+/o/oilrig,oilrig,drill_rig,rig
+/o/operating_room,operating_room,operating_room,hospital_room
+/o/orchard,orchard,grove,garden
+/o/outhouse/outdoor,outhouse,outhouse,outbuilding
+/p/pagoda,pagoda,pagoda,temple
+/p/palace,palace,palace,mansion
+/p/pantry,pantry,pantry,storeroom
+/p/park,park,park,tract
+/p/parking_garage/indoor,parking_garage, , 
+/p/parking_garage/outdoor,parking_garage, , 
+/p/parking_lot,parking_lot,parking_lot,lot
+/p/parlor,parlor,parlor,reception_room
+/p/pasture,pasture,pasture,grassland
+/p/patio,patio,patio,area
+/p/pavilion,pavilion,pavilion,tent
+/p/pharmacy,pharmacy,pharmacy,medicine
+/p/phone_booth,phone_booth,telephone_booth,booth
+/p/physics_laboratory,physics_laboratory,physics_lab,lab
+/p/picnic_area,picnic_area,picnic_area,tract
+/p/pilothouse/indoor,pilothouse,pilothouse,compartment
+/p/planetarium/outdoor,planetarium,planetarium,building
+/p/playground,playground,resort_area,area
+/p/playroom,playroom,rumpus_room,recreation_room
+/p/plaza,plaza,plaza,public_square
+/p/podium/indoor,podium,dais,platform
+/p/podium/outdoor,podium,dais,platform
+/p/pond,pond,pond,lake
+/p/poolroom/establishment,establishment,constitution,beginning
+/p/poolroom/home,home,home,residence
+/p/power_plant/outdoor,power_plant,power_station,station
+/p/promenade_deck,promenade_deck,hurricane_deck,deck
+/p/pub/indoor,pub,public_house,tavern
+/p/pulpit,pulpit,dais,platform
+/p/putting_green,putting_green,green,site
+/r/racecourse,racecourse,racetrack,course
+/r/raceway,raceway,raceway,canal
+/r/raft,raft,raft,float
+/r/railroad_track,railroad_track,railroad_track,track
+/r/rainforest,rainforest,rain_forest,forest
+/r/reception,reception,reception,greeting
+/r/recreation_room,recreation_room,recreation_room,room
+/r/residential_neighborhood,residential_neighborhood, , 
+/r/restaurant,restaurant,restaurant,building
+/r/restaurant_kitchen,restaurant_kitchen, , 
+/r/restaurant_patio,restaurant_patio, , 
+/r/rice_paddy,rice_paddy,paddy,field
+/r/riding_arena,riding_arena, , 
+/r/river,river,river,stream
+/r/rock_arch,rock_arch, , 
+/r/rope_bridge,rope_bridge,rope_bridge,bridge
+/r/ruin,ruin,ruin,devastation
+/r/runway,runway,track,bar
+/s/sandbar,sandbar,sandbar,bar
+/s/sandbox,sandbox,sandbox,mold
+/s/sauna,sauna,sauna,steam_bath
+/s/schoolhouse,schoolhouse,school,building
+/s/sea_cliff,sea_cliff, , 
+/s/server_room,server_room, , 
+/s/shed,shed,shed,outbuilding
+/s/shoe_shop,shoe_shop,shoe_shop,shop
+/s/shopfront,shopfront,shopfront,front
+/s/shopping_mall/indoor,shopping_mall,plaza,mercantile_establishment
+/s/shower,shower,shower,plumbing_fixture
+/s/skatepark,skatepark, , 
+/s/ski_lodge,ski_lodge,ski_lodge,hotel
+/s/ski_resort,ski_resort,ski_resort,resort
+/s/ski_slope,ski_slope,ski_slope,slope
+/s/sky,sky,sky,atmosphere
+/s/skyscraper,skyscraper,skyscraper,building
+/s/slum,slum,slum,city_district
+/s/snowfield,snowfield,snowfield,plain
+/s/squash_court,squash_court,squash_court,court
+/s/stable,stable,stable,farm_building
+/s/stadium/baseball,baseball,baseball,ball_game
+/s/stadium/football,football,football,contact_sport
+/s/stage/indoor,stage,phase,time_period
+/s/staircase,staircase,stairway,way
+/s/street,street,street,thoroughfare
+/s/subway_interior,subway_interior, , 
+/s/subway_station/platform,platform,platform,horizontal_surface
+/s/supermarket,supermarket,supermarket,grocery_store
+/s/sushi_bar,sushi_bar,sushi_bar,bar
+/s/swamp,swamp,swamp,wetland
+/s/swimming_pool/indoor,swimming_pool,swimming_pool,athletic_facility
+/s/swimming_pool/outdoor,swimming_pool,swimming_pool,athletic_facility
+/s/synagogue/indoor,synagogue,synagogue,place_of_worship
+/s/synagogue/outdoor,synagogue,synagogue,place_of_worship
+/t/television_studio,television_studio, , 
+/t/temple/east_asia,east_asia, , 
+/t/temple/south_asia,south_asia, , 
+/t/tennis_court/indoor,tennis_court,tennis_court,court
+/t/tennis_court/outdoor,tennis_court,tennis_court,court
+/t/tent/outdoor,tent,tent,shelter
+/t/theater/indoor_procenium,indoor_procenium, , 
+/t/theater/indoor_seats,indoor_seats, , 
+/t/thriftshop,thriftshop,thriftshop,shop
+/t/throne_room,throne_room, , 
+/t/ticket_booth,ticket_booth,box_office,office
+/t/toll_plaza,toll_plaza,toll_plaza,tract
+/t/topiary_garden,topiary_garden, , 
+/t/tower,tower,tower,structure
+/t/toyshop,toyshop,toyshop,shop
+/t/track/outdoor,track,path,line
+/t/train_railway,train_railway, , 
+/t/train_station/platform,platform,platform,horizontal_surface
+/t/tree_farm,tree_farm,tree_farm,forest
+/t/tree_house,tree_house,tree_house,playhouse
+/t/trench,trench,trench,ditch
+/u/underwater/coral_reef,coral_reef,coral_reef,reef
+/u/utility_room,utility_room, , 
+/v/valley,valley,valley,natural_depression
+/v/van_interior,van_interior, , 
+/v/vegetable_garden,vegetable_garden,kitchen_garden,garden
+/v/veranda,veranda,veranda,porch
+/v/veterinarians_office,veterinarians_office, , 
+/v/viaduct,viaduct,viaduct,bridge
+/v/videostore,videostore, , 
+/v/village,village,village,community
+/v/vineyard,vineyard,vineyard,farm
+/v/volcano,volcano,vent,crack
+/v/volleyball_court/indoor,volleyball_court,volleyball_court,court
+/v/volleyball_court/outdoor,volleyball_court,volleyball_court,court
+/w/waiting_room,waiting_room,lounge,room
+/w/warehouse/indoor,warehouse,warehouse,storehouse
+/w/water_tower,water_tower,water_tower,reservoir
+/w/waterfall/block,block,block,artifact
+/w/waterfall/fan,fan,fan,device
+/w/waterfall/plunge,plunge,dip,swimming
+/w/watering_hole,watering_hole,watering_place,resort_area
+/w/wave,wave,wave,movement
+/w/wet_bar,wet_bar,wet_bar,bar
+/w/wheat_field,wheat_field,wheatfield,grainfield
+/w/wind_farm,wind_farm,wind_farm,power_station
+/w/windmill,windmill,windmill,mill
+/w/wine_cellar/barrel_storage,barrel_storage, , 
+/w/wine_cellar/bottle_storage,bottle_storage, , 
+/w/wrestling_ring/indoor,wrestling_ring,wrestling_ring,ring
+/y/yard,yard,yard,linear_unit
+/y/youth_hoste,youth_hoste, , 
