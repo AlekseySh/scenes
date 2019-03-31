@@ -1,8 +1,9 @@
 from argparse import Namespace
-from typing import List
+from typing import List, Tuple, Union
 
 import cv2
 import numpy as np
+from torch import Tensor
 
 
 def beutify_args(args: Namespace) -> str:
@@ -16,7 +17,7 @@ def beutify_args(args: Namespace) -> str:
 def put_text_to_image(image: np.ndarray,
                       strings: List[str],
                       str_height: int = 25,
-                      color: Tuple[int] = (0, 0, 0),
+                      color: Tuple[int, int, int] = (0, 0, 0),
                       ) -> np.ndarray:
     image = image.astype(np.uint8)
 
@@ -33,12 +34,14 @@ def put_text_to_image(image: np.ndarray,
 
 
 class OnlineAvg:
+    avg: Union[np.ndarray, Tensor, float]
+    n: int
 
     def __init__(self):
         self.avg = 0
         self.n = 0
 
-    def update(self, new_x):
+    def update(self, new_x: Union[np.ndarray, Tensor, float]) -> None:
         self.n += 1
         self.avg = (self.avg * (self.n - 1) + new_x) / self.n
 
@@ -54,7 +57,7 @@ class Stopper:
         self._n_obs = n_obs
         self._delta = delta
 
-        self._cur_val = None
+        self._cur_val = 0
         self._max_val = 0
         self._num_fails = 0
 

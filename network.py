@@ -16,13 +16,15 @@ class Arch:
     RESNET18 = 'resnet18'
     RESNET34 = 'resnet34'
     RESNET50 = 'resnet50'
-
     VGG11 = 'vgg11'
-
     INCEPTION = 'inception'
 
 
 class Classifier(nn.Module):
+    arch: Arch
+
+    _n_classes: int
+    _model: nn.Module
 
     def __init__(self, arch: Arch, n_classes: int, pretrained: bool):
         super().__init__()
@@ -48,15 +50,17 @@ class Classifier(nn.Module):
         else:
             raise ValueError(f'Unexpected type {arch}')
 
-        self._arch = arch
+        self.arch = arch
         self._adopt_arch()
 
     def forward(self, inp: Tensor) -> Tensor:
         return self._model(inp)
 
-    def classify(self, inp: Union[Tensor, List[Tensor]]) -> Tuple[Tensor, Tensor]:
+    def classify(self,
+                 inp: Union[Tensor, List[Tensor]]
+                 ) -> Tuple[Tensor, Tensor]:
         self._model.eval()
-        if isinstance(inp, list):  # todo
+        if isinstance(inp, list):
             probs = self._classify_tta(inputs=inp)
         else:
             probs = self._classify_simple(inp=inp)
@@ -64,6 +68,7 @@ class Classifier(nn.Module):
         return label, confidence
 
     def _classify_tta(self, inputs: List[Tensor]) -> Tensor:
+        # todo
         bs, n_tta = inputs[0].shape[0], len(inputs)
         input_tensor = torch.cat(inputs)
         logits = self._model(input_tensor)
@@ -82,20 +87,20 @@ class Classifier(nn.Module):
         return probs
 
     def _adopt_arch(self) -> None:
-        if self._arch in [Arch.RESNET18, Arch.RESNET34, Arch.RESNET50, Arch.INCEPTION]:
+        if self.arch in [Arch.RESNET18, Arch.RESNET34, Arch.RESNET50, Arch.INCEPTION]:
             self._model.avgpool = nn.AdaptiveAvgPool2d(1)
             in_dim, out_dim = self._model.fc.in_features, self._n_classes
             self._model.fc = nn.Linear(in_dim, out_dim)
 
-        elif self._arch in [Arch.VGG11]:
+        elif self.arch in [Arch.VGG11]:
             fc = self._model.classifier[-1]
             in_dim, out_dim = fc.in_features, fc.out_features
             self._model.classifier[-1] = nn.Linear(in_dim, out_dim)
 
         else:
-            raise ValueError(f'Unexpected architecture {self._arch}.')
+            raise ValueError(f'Unexpected architecture {self.arch}.')
 
-    def save(self, path: Path, meta=Any) -> None:
+    def save(self, path: Path, meta: Any) -> None:
         checkpoint = {
             'state_dict': self._model.state_dict(),
             'meta': meta

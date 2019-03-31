@@ -7,4 +7,4 @@
 *synctex.gz*
 *.log*
 *.toc*
-
+*.mypy_cache*
