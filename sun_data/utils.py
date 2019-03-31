@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
-from typing import List, Tuple, Dict
+from random import shuffle
+from typing import List, Tuple, Dict, Union
 
 import pandas as pd
 from bidict import bidict
@@ -57,19 +58,20 @@ def load_file(file_path: Path) -> List[Path]:
 def get_split(mode: DataMode) -> Tuple[List[Path], List[Path]]:
     classic_modes = get_classic_modes()
 
-    if mode == DataMode.TAGS:
-        train_paths, test_paths = [], []
-        for cur_mode in classic_modes:
-            train_paths_cur, test_paths_cur = get_split(cur_mode)
-            train_paths.extend(train_paths_cur)
-            test_paths.extend(test_paths_cur)
-
-            # remove dublicated paths
-            train_paths = list(set(train_paths))
-            test_paths = list(set(test_paths))
-
-    elif mode in classic_modes:
+    if mode in classic_modes:
         train_paths, test_paths = get_split_classic(mode)
+
+    elif mode == DataMode.TAGS:
+        paths = []
+        for cur_mode in classic_modes:
+            train_paths_cur, test_paths_cur = get_split_classic(cur_mode)
+            paths.extend(train_paths_cur)
+            paths.extend(test_paths_cur)
+
+        paths = list(set(paths))  # remove dublicated paths
+        shuffle(paths)
+        n_train = int(0.8 * len(paths))
+        train_paths, test_paths = paths[:n_train], paths[n_train:]
 
     else:
         raise ValueError(f'Unexpected data mode {mode}.')
@@ -137,10 +139,14 @@ def get_sun_to_tags_mapping() -> Dict[str, str]:
 
 # RANDOM
 
-def beutify_name(sun_name: Path) -> str:
+def beutify_name(sun_name: Union[Path, str]) -> str:
     sun_special_words = [
         'indoor', 'outdoor', 'exterior', 'interior'
     ]
+
+    if isinstance(sun_name, str):
+        sun_name = Path(sun_name)
+
     beutified_name = sun_name.name
     if str(beutified_name) in sun_special_words:
         beutified_name = sun_name.parent.name

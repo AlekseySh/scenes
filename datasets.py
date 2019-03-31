@@ -23,35 +23,42 @@ logger.info(f'Using image size: {SIZE}')
 class ImagesDataset(Dataset):
     _data_root: Path
     _im_paths: List[Path]
-    _labels: List[int]
+    _labels_enum: List[int]
     _transforms: t.Compose
 
     def __init__(self,
                  data_root: Path,
                  im_paths: List[Path],
-                 labels: List[int]
+                 labels_enum: List[int]
                  ):
-        assert len(im_paths) == len(labels)
+        assert len(im_paths) == len(labels_enum)
 
         super().__init__()
         self._data_root = data_root
         self._im_paths = im_paths
-        self._labels = labels
+        self._labels_enum = labels_enum
         self._transforms = None
 
     def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
         assert self._transforms is not None
 
-        im_path, label = self._im_paths[idx], self._labels[idx]
-
-        if str(im_path).startswith('/'):
-            im_path = Path(str(im_path)[1:])
-
-        im_tensor = self._transforms(_read_pil(self._data_root / im_path))
+        im_tensor = self._transforms(self._read_pil(idx))
+        label = self._labels_enum[idx]
         return im_tensor, label
 
     def __len__(self) -> int:
-        return len(self._im_paths)
+        return 10  # len(self._im_paths)
+
+    def _read_pil(self, idx: int) -> TImage:
+        local_path = self._im_paths[idx]
+
+        if str(local_path).startswith('/'):
+            local_path = Path(str(local_path)[1:])
+
+        abs_path = self._data_root / local_path
+
+        pil_image = PIL.Image.open(abs_path).convert('RGB')
+        return pil_image
 
     def set_default_transforms(self) -> None:
         self._transforms = get_default_transforms()
@@ -69,20 +76,19 @@ class ImagesDataset(Dataset):
                          color: Tuple[int, int, int],
                          text: List[str]
                          ) -> Tensor:
-        image = np.array(_read_pil(self._im_paths[idx]))
+        image = np.array(self._read_pil(idx))
         image = put_text_to_image(image=image, strings=text, color=color)
-        image = t.ToTensor()(image)
-        image_tensor = torch.tensor(255 * image, dtype=torch.uint8)
+        image_tensor = (255 * t.ToTensor()(image)).type(torch.uint8)
         return image_tensor
 
     def draw_class_samples(self,
                            n_samples: int,
-                           class_label: int,
+                           class_num: int,
                            text: List[str],
                            color: Tuple[int, int, int]
                            ) -> Tensor:
         layout = torch.zeros([n_samples, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
-        ii_class = np.squeeze(np.nonzero(np.array(self._labels) == class_label))
+        ii_class = np.squeeze(np.nonzero(np.array(self._labels_enum) == class_num))
         ii_sampels = np.random.choice(ii_class, size=n_samples)
         for i, ind in enumerate(ii_sampels):
             layout[i, :, :, :] = self.get_signed_image(idx=ind, color=color, text=text)
@@ -134,8 +140,3 @@ def get_random_transforms() -> t.RandomOrder:
     ]
     rand_transforms = t.RandomOrder([t.RandomApply([aug], p=apply_prob) for aug in aug_list])
     return rand_transforms
-
-
-def _read_pil(im_path: Path) -> TImage:
-    pil_image = PIL.Image.open(im_path).convert('RGB')
-    return pil_image

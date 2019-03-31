@@ -21,16 +21,16 @@ def main(args: Namespace) -> float:
 
     fix_seed(args.seed)
 
-    (train_paths, train_names), (test_paths, test_names), name_to_label = \
+    (train_paths, train_names), (test_paths, test_names), name_to_enum = \
         load_data(args.data_mode)
 
-    train_labels = [name_to_label[name] for name in train_names]
-    test_labels = [name_to_label[name] for name in test_names]
+    train_labels = [name_to_enum[name] for name in train_names]
+    test_labels = [name_to_enum[name] for name in test_names]
 
     train_set = ImagesDataset(args.data_root, train_paths, train_labels)
     test_set = ImagesDataset(args.data_root, test_paths, test_labels)
 
-    n_classes = len(name_to_label)
+    n_classes = len(name_to_enum)
     logger.info(f'Number of classes: {n_classes}.')
 
     classifier = Classifier(args.arch, n_classes, args.pretrained)
@@ -38,7 +38,7 @@ def main(args: Namespace) -> float:
 
     trainer = Trainer(classifier=classifier, board_dir=board_dir,
                       train_set=train_set, test_set=test_set,
-                      name_to_enum=name_to_label, device=args.device,
+                      name_to_enum=name_to_enum, device=args.device,
                       batch_size=args.batch_size)
 
     max_metric = trainer.train(n_max_epoch=args.n_max_epoch, test_freq=args.test_freq,

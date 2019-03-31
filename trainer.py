@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict
 
 import numpy as np
 import torch
@@ -82,7 +82,7 @@ class Trainer:
             self._optimizer.step()
 
             avg_loss.update(loss.data)
-            loss_val = round(float(avg_loss.avg.detach().cpu()), 4)
+            loss_val = round(float(avg_loss.avg), 4)
             loader_tqdm.set_postfix({'Avg loss': loss_val})
 
             self._writer.add_scalar('Loss', loss_val, self._i_global)
@@ -126,11 +126,13 @@ class Trainer:
             confs[i_start: i_stop] = conf
 
         mc = Calculator(gts=labels, preds=preds, confidences=confs)
+        ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
+        if len(ii_worst) > 0:
+            self.visualize(ids=ii_worst, enums_pred=preds[ii_worst], title='Worst_mistakes')
+        if len(ii_best) > 0:
+            self.visualize(ids=ii_best, enums_pred=preds[ii_best], title='Best_predicts')
+
         metrics = mc.calc()
-        # ii_worst = mc.find_worst_mistakes(n_worst=8)
-        # ii_best = mc.find_best_predicts(n_best=8)
-        # self.visualize(ii_worst, preds[ii_worst], 'Worst_mistakes')
-        # self.visualize(ii_best, preds[ii_best], 'Best_predicts')
         self._writer.add_scalar('Accuracy', metrics['accuracy'], self._i_global)
         return metrics
 
@@ -142,7 +144,8 @@ class Trainer:
               ckpt_dir: Path
               ) -> float:
         best_ckpt_path = ckpt_dir / 'best.pth.tar'
-        acc_max, best_epoch = 0, 0
+        acc_max: float = 0
+        best_epoch: int = 0
         for i in range(n_max_epoch):
             # train
             logger.info(f'Epoch {i} from {n_max_epoch}')
@@ -174,38 +177,30 @@ class Trainer:
         logger.info(f'Metric value with TTA: {acc_tta}')
         return max(acc_max, acc_tta)
 
-    def visualize(self, indeces: List[int], labels_pred, board_tag: str) -> None:
-        base_color = (0, 0, 0)
-        gt_color = (0, 255, 0)
-        err_color = (255, 0, 0)
+    def visualize(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
+        base_color, gt_color, err_color = (0, 0, 0), (0, 255, 0), (255, 0, 0)
         n_gt_samples, n_pred_samples = 2, 2
 
-        layour_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
+        layer_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
+        for (idx, enum_pred) in zip(ids, enums_pred):
+            _, enum_gt = self._test_set[idx]
+            name_gt = beutify_name(self._name_to_enum.inv[enum_gt])
+            name_pred = beutify_name(self._name_to_enum.inv[enum_pred])
 
-        for (idx, label_pred) in zip(indeces, labels_pred):
-            _, label_gt = self._test_set[idx]
-            name_gt = beutify_name(self._name_to_enum.inv[label_gt])
-            name_pred = beutify_name(self._name_to_enum.inv[label_pred])
-
-            main_img = self._test_set.get_signed_image(idx=idx,
-                                                       text=[f'pred: {name_pred}', f'gt: {name_gt}'],
-                                                       color=base_color
-                                                       )
+            main_img = self._test_set.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
+                                                       idx=idx, color=base_color)
 
             gt_imgs = self._test_set.draw_class_samples(
-                n_samples=n_gt_samples, class_label=int(label_gt), color=gt_color)
+                n_samples=n_gt_samples, class_num=enum_gt, color=gt_color, text=[name_gt])
 
-            pred_color = gt_color if label_gt == label_pred else err_color
+            pred_color = gt_color if enum_gt == enum_pred else err_color
             pred_imgs = self._test_set.draw_class_samples(
-                n_samples=n_pred_samples, class_label=int(label_pred), color=pred_color)
+                n_samples=n_pred_samples, class_num=enum_pred, color=pred_color, text=[name_pred])
 
-            layour_tensor = torch.cat(
-                [layour_tensor, main_img.unsqueeze(dim=0), gt_imgs, pred_imgs], dim=0)
+            layer_tensor = torch.cat(
+                [layer_tensor, main_img.unsqueeze(dim=0), gt_imgs, pred_imgs], dim=0)
 
-        grid = vutils.make_grid(tensor=layour_tensor,
-                                nrow=n_gt_samples + n_pred_samples + 1,
-                                normalize=False,
-                                scale_each=True
-                                )
+        grid = vutils.make_grid(tensor=layer_tensor, nrow=n_gt_samples + n_pred_samples + 1,
+                                normalize=False, scale_each=False)
 
-        self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=board_tag)
+        self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=title)

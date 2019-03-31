@@ -21,13 +21,13 @@ class Calculator:
         metrics = {'accuracy': acc}
         return metrics
 
-    def find_worst_mistakes(self, n_worst: int) -> np.ndarray:
+    def worst_errors(self, n_worst: int) -> np.ndarray:
         ii_mistakes = np.nonzero(self._preds != self._gts)[0]
         probs = self._confidences[ii_mistakes]
         ii_worst = ii_mistakes[np.argsort(probs)][-n_worst:]
         return ii_worst
 
-    def find_best_predicts(self, n_best: int) -> np.ndarray:
+    def best_preds(self, n_best: int) -> np.ndarray:
         ii_correct = np.nonzero(self._preds == self._gts)[0]
         probs = self._confidences[ii_correct]
         ii_best = ii_correct[np.argsort(probs)][-n_best:]
