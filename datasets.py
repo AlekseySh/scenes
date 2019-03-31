@@ -1,11 +1,14 @@
 import logging
 from pathlib import Path
+from typing import Tuple
 
 import PIL
 import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as t
+from PIL.Image import Image as TImage
+from torch import Tensor
 from torch.utils.data import Dataset
 
 from common import put_text_to_image
@@ -32,7 +35,7 @@ class ImagesDataset(Dataset):
         self.df = pd.read_csv(self.csv_path)
 
     def __getitem__(self, idx):
-        pil_image = self.__read_pil_image(idx)
+        pil_image = self._read_pil_image(idx)
         label = self.df['class_enum'][idx]
         data = {
             'image': self.transforms(pil_image),
@@ -40,20 +43,28 @@ class ImagesDataset(Dataset):
         }
         return data
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.df)
 
-    def get_signed_image(self, idx, color, text=None):
+    def get_signed_image(self,
+                         idx: int,
+                         color: Tuple[int, int, int],
+                         text: str = None
+                         ) -> Tensor:
         if text is None:
             text = [beutify_name(self.df['class_name'][idx])]
 
-        image = np.array(self.__read_pil_image(idx))
+        image = np.array(self._read_pil_image(idx))
         image = put_text_to_image(image, strings=text, color=color)
         image = t.ToTensor()(image)
         image_tensor = torch.tensor(255 * image, dtype=torch.uint8)
         return image_tensor
 
-    def draw_class_samples(self, n_samples, label, color):
+    def draw_class_samples(self,
+                           n_samples: int,
+                           label,
+                           color: Tuple[int, int, int]
+                           ) -> Tensor:
         layout = torch.zeros([n_samples, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
         ii_class = np.squeeze(np.nonzero(self.df['class_enum'] == label))
         ii_sampels = np.random.choice(ii_class, size=n_samples)
@@ -61,25 +72,25 @@ class ImagesDataset(Dataset):
             layout[i, :, :, :] = self.get_signed_image(ind, color)
         return layout
 
-    def __read_pil_image(self, idx):
+    def _read_pil_image(self, idx: int) -> Timage:
         path = self.data_fold / self.df['path'][idx]
         pil_image = PIL.Image.open(path).convert('RGB')
         return pil_image
 
-    def get_num_classes(self):
+    def get_num_classes(self) -> int:
         return len(set(self.df['class_enum']))
 
-    def set_default_transforms(self):
+    def set_default_transforms(self) -> None:
         self.transforms = get_default_transforms()
 
-    def set_train_transforms(self):
+    def set_train_transforms(self) -> None:
         self.transforms = get_train_transforms()
 
-    def set_test_transforms(self, n_augs: int):
+    def set_test_transforms(self, n_augs: int) -> None:
         self.transforms = get_test_transforms(n_augs=n_augs)
 
 
-def get_default_transforms():
+def get_default_transforms() -> t.Compose:
     transforms = t.Compose([t.Resize(size=SIZE),
                             t.ToTensor(),
                             t.Normalize(mean=MEAN, std=STD)]
@@ -87,7 +98,7 @@ def get_default_transforms():
     return transforms
 
 
-def get_train_transforms():
+def get_train_transforms() -> t.Compose:
     transforms = t.Compose([t.Resize(size=SIZE),
                             get_random_transforms(),
                             t.ToTensor(),
@@ -96,7 +107,7 @@ def get_train_transforms():
     return transforms
 
 
-def get_test_transforms(n_augs):
+def get_test_transforms(n_augs: int) -> t.Compose:
     # Test Time Augmentation (TTA) aproach
     rand_transforms = get_random_transforms()
     default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
@@ -108,7 +119,7 @@ def get_test_transforms(n_augs):
     return augs
 
 
-def get_random_transforms():
+def get_random_transforms() -> t.RandomOrder:
     crop_k = 0.9
     degree = 10
     color_k = 0.3

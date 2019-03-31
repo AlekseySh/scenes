@@ -1,10 +1,11 @@
 import csv
+from argparse import Namespace
 
 from train import get_parser
 from train import main as train_main
 
 
-def main(args):
+def main(args: Namespace) -> None:
     split_ids = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']
 
     work_dir_root = args.work_root

@@ -2,31 +2,32 @@ import numpy as np
 
 
 class Calculator:
+    _gts: np.ndarray
+    _preds: np.ndarray
+    _confidences: np.ndarray
 
-    def __init__(self, gt, pred, score):
-        assert gt.shape == pred.shape
-        assert gt.shape == score.shape
+    def __init__(self, gts: np.ndarray, preds: np.ndarray, confidences: np.ndarray):
+        assert gts.shape == preds.shape
+        assert gts.shape == confidences.shape
 
-        self.gt = gt
-        self.pred = pred
-        self.score = score
-        self.samples_num = len(self.gt)
+        self._gts = gts
+        self._preds = preds
+        self._confidences = confidences
+        self.samples_num = len(self._gts)
 
-    def calc(self):
-        acc = np.sum(self.gt == self.pred) / self.samples_num
-        metrics = {
-            'accuracy': acc
-        }
+    def calc(self) -> Dict[str, float]:
+        acc = np.sum(self._gts == self._preds) / self.samples_num
+        metrics = {'accuracy': acc}
         return metrics
 
     def find_worst_mistakes(self, n_worst: int) -> np.ndarray:
-        ii_mistakes = np.nonzero(self.pred != self.gt)[0]
-        probs = self.score[ii_mistakes]
+        ii_mistakes = np.nonzero(self._preds != self._gts)[0]
+        probs = self._confidences[ii_mistakes]
         ii_worst = ii_mistakes[np.argsort(probs)][-n_worst:]
         return ii_worst
 
     def find_best_predicts(self, n_best: int) -> np.ndarray:
-        ii_correct = np.nonzero(self.pred == self.gt)[0]
-        probs = self.score[ii_correct]
+        ii_correct = np.nonzero(self._preds == self._gts)[0]
+        probs = self._confidences[ii_correct]
         ii_best = ii_correct[np.argsort(probs)][-n_best:]
         return ii_best
