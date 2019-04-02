@@ -4,6 +4,7 @@ from typing import Dict
 
 import numpy as np
 import torch
+import torchvision.transforms as t
 from bidict import bidict
 from tensorboardX import SummaryWriter
 from torch import nn, optim
@@ -12,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision import utils as vutils
 from tqdm import tqdm
 
-from common import OnlineAvg, Stopper
+from common import OnlineAvg, Stopper, confusion_matrix_as_img
 from datasets import ImagesDataset
 from datasets import SIZE
 from metrics import Calculator
@@ -102,16 +103,13 @@ class Trainer:
             def to_device(x):
                 return x.to(self._device)
 
-        loader = DataLoader(dataset=self._test_set,
-                            batch_size=batch_size_tta,
-                            num_workers=self._num_workers,
-                            shuffle=False
-                            )
+        loader = DataLoader(dataset=self._test_set, batch_size=batch_size_tta,
+                            num_workers=self._num_workers, shuffle=False)
         n_samples = len(loader.dataset)
 
-        labels = np.zeros(n_samples, dtype=np.int)
-        preds = np.zeros_like(labels)
-        confs = np.zeros_like(labels, dtype=np.float)
+        gts = np.zeros(n_samples, dtype=np.int)
+        preds = np.zeros_like(gts)
+        confs = np.zeros_like(gts, dtype=np.float)
         for i, (im, label) in tqdm(enumerate(loader), total=len(loader)):
             pred, conf = self._classifier.classify(to_device(im))
 
@@ -121,18 +119,17 @@ class Trainer:
             i_start = i * loader.batch_size
             i_stop = min(i_start + loader.batch_size, n_samples)
 
-            labels[i_start: i_stop] = label.numpy()
+            gts[i_start: i_stop] = label.numpy()
             preds[i_start: i_stop] = pred
             confs[i_start: i_stop] = conf
 
-        mc = Calculator(gts=labels, preds=preds, confidences=confs)
-        ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
-        if len(ii_worst) > 0:
-            self.visualize(ids=ii_worst, enums_pred=preds[ii_worst], title='Worst_mistakes')
-        if len(ii_best) > 0:
-            self.visualize(ids=ii_best, enums_pred=preds[ii_best], title='Best_predicts')
-
+        mc = Calculator(gts=gts, preds=preds, confidences=confs)
         metrics = mc.calc()
+        ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
+
+        self._visualize(ids=ii_worst, enums_pred=preds[ii_worst], title='Worst_mistakes')
+        self._visualize(ids=ii_best, enums_pred=preds[ii_best], title='Best_predicts')
+        self._visualise_confusion(preds=preds, gts=gts)
         self._writer.add_scalar('Accuracy', metrics['accuracy'], self._i_global)
         return metrics
 
@@ -177,7 +174,10 @@ class Trainer:
         logger.info(f'Metric value with TTA: {acc_tta}')
         return max(acc_max, acc_tta)
 
-    def visualize(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
+    def _visualize(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
+        if len(ids) == 0:
+            return
+
         base_color, gt_color, err_color = (0, 0, 0), (0, 255, 0), (255, 0, 0)
         n_gt_samples, n_pred_samples = 2, 2
 
@@ -204,3 +204,9 @@ class Trainer:
                                 normalize=False, scale_each=False)
 
         self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=title)
+
+    def _visualise_confusion(self, preds: np.ndarray, gts: np.ndarray) -> None:
+        class_names = [self._name_to_enum.inv[num] for num in range(0, len(self._name_to_enum))]
+        conf_mat = confusion_matrix_as_img(gts=gts, preds=preds, classes=class_names)
+        self._writer.add_image(global_step=self._i_global, tag='Confusion matrix.',
+                               img_tensor=t.ToTensor()(conf_mat))

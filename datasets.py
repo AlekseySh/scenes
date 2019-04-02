@@ -47,7 +47,7 @@ class ImagesDataset(Dataset):
         return im_tensor, label
 
     def __len__(self) -> int:
-        return 10  # len(self._im_paths)
+        return len(self._im_paths)
 
     def _read_pil(self, idx: int) -> TImage:
         local_path = self._im_paths[idx]
