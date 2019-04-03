@@ -60,30 +60,32 @@ class Classifier(nn.Module):
                  inp: Union[Tensor, List[Tensor]]
                  ) -> Tuple[Tensor, Tensor]:
         self._model.eval()
-        if isinstance(inp, list):
-            probs = self._classify_tta(inputs=inp)
-        else:
-            probs = self._classify_simple(inp=inp)
-        confidence, label = torch.max(probs, dim=1)
+        with torch.no_grad():
+            if isinstance(inp, list):
+                probs = self._classify_tta(inputs=inp)
+            else:
+                probs = self._classify_simple(inp=inp)
+            confidence, label = torch.max(probs, dim=1)
         return label, confidence
 
     def _classify_tta(self, inputs: List[Tensor]) -> Tensor:
-        # todo
-        bs, n_tta = inputs[0].shape[0], len(inputs)
-        input_tensor = torch.cat(inputs)
-        logits = self._model(input_tensor)
+        with torch.no_grad():
+            bs, n_tta = inputs[0].shape[0], len(inputs)
+            input_tensor = torch.cat(inputs)
+            logits = self._model(input_tensor)
 
-        # now calc averaged by augmentations logit for each sample in batch
-        probs_avg = torch.zeros([bs, self._n_classes], dtype=torch.float)
-        for i in range(bs):
-            ii = np.arange(start=i, stop=n_tta * bs, step=bs)
-            probs = softmax(logits[ii, :], dim=1)
-            probs_avg[i, :] = torch.mean(probs, dim=0)
+            # now calc averaged by augmentations logit for each sample in batch
+            probs_avg = torch.zeros([bs, self._n_classes], dtype=torch.float)
+            for i in range(bs):
+                ii = np.arange(start=i, stop=n_tta * bs, step=bs)
+                probs = softmax(logits[ii, :], dim=1)
+                probs_avg[i, :] = torch.mean(probs, dim=0)
         return probs_avg
 
     def _classify_simple(self, inp: Tensor) -> Tensor:
-        logits = self._model(inp)
-        probs = softmax(logits, dim=1)
+        with torch.no_grad():
+            logits = self._model(inp)
+            probs = softmax(logits, dim=1)
         return probs
 
     def _adopt_arch(self) -> None:

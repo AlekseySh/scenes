@@ -14,10 +14,9 @@ from torchvision import utils as vutils
 from tqdm import tqdm
 
 from common import OnlineAvg, Stopper, confusion_matrix_as_img
-from datasets import ImagesDataset
-from datasets import SIZE
+from datasets import ImagesDataset, SIZE
 from metrics import Calculator
-from network import Classifier
+from network import Classifier, Arch
 from sun_data.utils import beutify_name
 
 logger = logging.getLogger(__name__)
@@ -77,8 +76,16 @@ class Trainer:
         for im, label in loader_tqdm:
             self._optimizer.zero_grad()
 
-            logits = self._classifier(im.to(self._device))
-            loss = self._criterion(logits, label.to(self._device))
+            if self._classifier.arch == Arch.INCEPTION:
+                logits, aux_output = self._classifier(im.to(self._device))
+                loss1 = self._criterion(logits, label.to(self._device))
+                loss2 = self._criterion(aux_output, label.to(self._device))
+                loss = loss1 + .4 * loss2
+
+            else:
+                logits = self._classifier(im.to(self._device))
+                loss = self._criterion(logits, label.to(self._device))
+
             loss.backward()
             self._optimizer.step()
 
@@ -208,5 +215,5 @@ class Trainer:
     def _visualise_confusion(self, preds: np.ndarray, gts: np.ndarray) -> None:
         class_names = [self._name_to_enum.inv[num] for num in range(0, len(self._name_to_enum))]
         conf_mat = confusion_matrix_as_img(gts=gts, preds=preds, classes=class_names)
-        self._writer.add_image(global_step=self._i_global, tag='Confusion matrix.',
+        self._writer.add_image(global_step=self._i_global, tag='Confusion_matrix.',
                                img_tensor=t.ToTensor()(conf_mat))

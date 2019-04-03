@@ -14,7 +14,7 @@ from common import put_text_to_image
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)
-SIZE = (256, 256)
+SIZE = (256, 256)  # 299 for inception, 224 others
 
 logger = logging.getLogger(__name__)
 logger.info(f'Using image size: {SIZE}')
@@ -76,7 +76,7 @@ class ImagesDataset(Dataset):
                          color: Tuple[int, int, int],
                          text: List[str]
                          ) -> Tensor:
-        image = np.array(self._read_pil(idx))
+        image = np.array(self._read_pil(idx).resize(SIZE))
         image = put_text_to_image(image=image, strings=text, color=color)
         image_tensor = (255 * t.ToTensor()(image)).type(torch.uint8)
         return image_tensor
