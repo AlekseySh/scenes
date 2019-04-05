@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision import utils as vutils
 from tqdm import tqdm
 
-from common import OnlineAvg, Stopper, confusion_matrix_as_img
+from common import OnlineAvg, Stopper, confusion_matrix_as_img, histogram_as_img
 from datasets import ImagesDataset, SIZE
 from metrics import Calculator
 from network import Classifier, Arch
@@ -96,7 +96,7 @@ class Trainer:
             self._writer.add_scalar('Loss', loss_val, self._i_global)
             self._i_global += 1
 
-    def test(self, n_tta: int) -> Dict[str, float]:
+    def test(self, n_tta: int) -> float:
         if n_tta != 0:
             self._test_set.set_test_transforms(n_augs=n_tta)
             batch_size_tta = int(self._batch_size / n_tta)
@@ -132,13 +132,13 @@ class Trainer:
 
         mc = Calculator(gts=gts, preds=preds, confidences=confs)
         metrics = mc.calc()
-        ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
 
+        ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
         self._visualize(ids=ii_worst, enums_pred=preds[ii_worst], title='Worst_mistakes')
         self._visualize(ids=ii_best, enums_pred=preds[ii_best], title='Best_predicts')
-        self._visualise_confusion(preds=preds, gts=gts)
-        self._writer.add_scalar('Accuracy', metrics['accuracy'], self._i_global)
-        return metrics
+        self._visualize_confusion(preds=preds, gts=gts)
+        self._log_metrics(metrics=metrics, tag='Test')
+        return metrics['accuracy_weighted']
 
     def train(self,
               n_max_epoch: int,
@@ -147,6 +147,9 @@ class Trainer:
               stopper: Stopper,
               ckpt_dir: Path
               ) -> float:
+
+        self._visualize_hist()
+
         best_ckpt_path = ckpt_dir / 'best.pth.tar'
         acc_max: float = 0
         best_epoch: int = 0
@@ -157,12 +160,11 @@ class Trainer:
 
             if i % test_freq == 0:
                 # test
-                acc = self.test(n_tta=0)['accuracy']
+                acc = self.test(n_tta=0)
 
                 # save model
                 save_path = ckpt_dir / f'epoch{i}.pth.tar'
                 self._classifier.save(save_path, meta={'acc': acc})
-                logger.info(f'Accuracy: {acc}')
 
                 if acc > acc_max:
                     acc_max, best_epoch = acc, i
@@ -170,16 +172,21 @@ class Trainer:
 
                 stopper.update(acc)
                 if stopper.check_criterion():
-                    logger.info(f'Training stoped by criterion. Reached {i} epoch of {n_max_epoch}')
+                    logger.info(f'Stop by criterion. Reached {i} epoch of {n_max_epoch}')
                     break
 
         logger.info(f'Max metric {acc_max} reached at {best_epoch} epoch.')
         logger.info('Try improve this value with TTA:')
 
         self._classifier.load(best_ckpt_path)
-        acc_tta = self.test(n_tta=n_tta)['accuracy']
+        acc_tta = self.test(n_tta=n_tta)
         logger.info(f'Metric value with TTA: {acc_tta}')
         return max(acc_max, acc_tta)
+
+    def _log_metrics(self, metrics: Dict[str, float], tag: str):
+        for name, val in metrics.items():
+            logger.info(f'{name}: {val}')
+            self._writer.add_scalar(f'{tag}_{name}', val, self._i_global)
 
     def _visualize(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
         if len(ids) == 0:
@@ -212,8 +219,16 @@ class Trainer:
 
         self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=title)
 
-    def _visualise_confusion(self, preds: np.ndarray, gts: np.ndarray) -> None:
+    def _visualize_confusion(self, preds: np.ndarray, gts: np.ndarray) -> None:
         class_names = [self._name_to_enum.inv[num] for num in range(0, len(self._name_to_enum))]
         conf_mat = confusion_matrix_as_img(gts=gts, preds=preds, classes=class_names)
         self._writer.add_image(global_step=self._i_global, tag='Confusion_matrix.',
                                img_tensor=t.ToTensor()(conf_mat))
+
+    def _visualize_hist(self) -> None:
+        labels_enum = self._train_set.labels_enum
+        labels_enum.extend(self._test_set.labels_enum)
+        names = [self._name_to_enum.inv[enum] for enum in labels_enum]
+        histogram = histogram_as_img(names)
+        self._writer.add_image(global_step=self._i_global, tag='Histogram.',
+                               img_tensor=t.ToTensor()(histogram))

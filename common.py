@@ -6,10 +6,12 @@ import PIL
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 from PIL.Image import Image
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+from seaborn import countplot
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 from torch import Tensor
@@ -98,6 +100,14 @@ class Stopper:
             self._max_val = self._cur_val
 
 
+def canvas_to_img(canvas: FigureCanvas) -> PIL.Image:
+    canvas.draw()
+    string, (width, height) = canvas.print_to_buffer()
+    img = np.fromstring(string, np.uint8).reshape((height, width, 4))
+    pil_image = PIL.Image.fromarray(img, mode='RGBA')
+    return pil_image
+
+
 def confusion_matrix_as_img(gts: np.ndarray,
                             preds: np.ndarray,
                             classes: List[str]
@@ -111,8 +121,7 @@ def confusion_matrix_as_img(gts: np.ndarray,
     canvas = FigureCanvas(fig)
     ax = fig.gca()
 
-    im = ax.imshow(conf_mat, interpolation='nearest', cmap=plt.cm.Blues)
-    ax.figure.colorbar(im, ax=ax)
+    ax.imshow(conf_mat, interpolation='nearest', cmap=plt.cm.Blues)
 
     ax.set(xticks=np.arange(conf_mat.shape[1]),
            yticks=np.arange(conf_mat.shape[0]),
@@ -131,8 +140,17 @@ def confusion_matrix_as_img(gts: np.ndarray,
                     )
 
     fig.tight_layout()
-    canvas.draw()
-    string, (width, height) = canvas.print_to_buffer()
-    img = np.fromstring(string, np.uint8).reshape((height, width, 4))
-    pil_image = PIL.Image.fromarray(img, mode='RGBA')
+    pil_image = canvas_to_img(canvas)
+    return pil_image
+
+
+def histogram_as_img(categories: List[str]) -> Image:
+    fig = Figure(figsize=(16, 16))
+    canvas = FigureCanvas(fig)
+    ax = fig.gca()
+    countplot(ax=ax, x='category', data=pd.DataFrame({'category': categories}))
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+    fig.tight_layout()
+    pil_image = canvas_to_img(canvas)
     return pil_image

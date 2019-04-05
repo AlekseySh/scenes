@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Dict
+
+import numpy as np
 
 
 class Calculator:
@@ -17,8 +18,10 @@ class Calculator:
         self.samples_num = len(self._gts)
 
     def calc(self) -> Dict[str, float]:
-        acc = np.sum(self._gts == self._preds) / self.samples_num
-        metrics = {'accuracy': acc}
+        metrics = {
+            'accuracy': round(calc_accuracy(self._gts, self._preds), 4),
+            'accuracy_weighted': round(calc_accuracy_weighted(self._gts, self._preds), 4)
+        }
         return metrics
 
     def worst_errors(self, n_worst: int) -> np.ndarray:
@@ -32,3 +35,19 @@ class Calculator:
         probs = self._confidences[ii_correct]
         ii_best = ii_correct[np.argsort(probs)][-n_best:]
         return ii_best
+
+
+def calc_accuracy(gts: np.ndarray, preds: np.ndarray) -> float:
+    assert gts.shape == preds.shape
+    acc = np.sum(gts == preds) / len(gts)
+    return float(acc)
+
+
+def calc_accuracy_weighted(gts: np.ndarray, preds: np.ndarray) -> float:
+    assert gts.shape == preds.shape
+    acc_list = []
+    for label in np.union1d(gts, preds):
+        w_label = gts == label
+        acc = calc_accuracy(gts=gts[w_label], preds=preds[w_label])
+        acc_list.append(acc)
+    return np.mean(acc_list)

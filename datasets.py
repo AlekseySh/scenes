@@ -69,6 +69,10 @@ class ImagesDataset(Dataset):
     def set_test_transforms(self, n_augs: int) -> None:
         self._transforms = get_test_transforms(n_tta=n_augs)
 
+    @property
+    def labels_enum(self):
+        return self._labels_enum
+
     # VISUALISATION
 
     def get_signed_image(self,

@@ -8,7 +8,7 @@ import torch
 
 from common import beutify_args, Stopper, fix_seed
 from datasets import ImagesDataset
-from network import Classifier, Arch
+from network import Classifier
 from sun_data.utils import DataMode, load_data
 from trainer import Trainer
 
@@ -68,7 +68,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
                         default=DataMode.TAGS, help=f'One mode from {DataMode}.')
 
-    parser.add_argument('--arch', dest='arch', type=str, default='vgg11')
+    parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
     parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=50)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=3)
