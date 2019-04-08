@@ -1,4 +1,5 @@
 import logging
+import time
 from argparse import Namespace, ArgumentParser
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(args: Namespace) -> float:
+    start = time.time()
     board_dir, ckpt_dir = setup_logging(args.log_dir)
     logger.info(f'Params: \n{beutify_args(args)}')
 
@@ -43,6 +45,8 @@ def main(args: Namespace) -> float:
 
     max_metric = trainer.train(n_max_epoch=args.n_max_epoch, test_freq=args.test_freq,
                                n_tta=args.n_tta, stopper=stopper, ckpt_dir=ckpt_dir)
+
+    logger.info(f'Elapsed time: {round((time.time() - start)/60, 3)} min.')
     return max_metric
 
 
@@ -71,9 +75,9 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
     parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=50)
-    parser.add_argument('--test_freq', dest='test_freq', type=int, default=3)
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=32)
-    parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)
+    parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
+    parser.add_argument('--n_tta', dest='n_tta', type=int, default=1)
     parser.add_argument('--n_workers', dest='n_workers', type=int, default=5)
     parser.add_argument('--device', dest='device', type=torch.device, default='cuda:1')
     parser.add_argument('--random_seed', dest='seed', type=int, default=42)

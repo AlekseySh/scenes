@@ -56,7 +56,7 @@ class Trainer:
 
         self._num_workers = 4
         self._criterion = nn.CrossEntropyLoss()
-        self._optimizer = optim.Adam(self._classifier.parameters(), lr=1e-4)
+        self._optimizer = optim.Adam(self._classifier.parameters())
         self._writer = SummaryWriter(str(self._board_dir))
 
         self._i_global = 0
@@ -64,12 +64,12 @@ class Trainer:
 
     def train_epoch(self) -> None:
         self._classifier.train()
+        self._train_set.set_default_transforms()
         loader = DataLoader(dataset=self._train_set,
                             batch_size=self._batch_size,
                             num_workers=self._num_workers,
                             shuffle=True
                             )
-        self._train_set.set_default_transforms()
 
         avg_loss = OnlineAvg()
         loader_tqdm = tqdm(loader, total=len(loader))
@@ -86,14 +86,14 @@ class Trainer:
                 logits = self._classifier(im.to(self._device))
                 loss = self._criterion(logits, label.to(self._device))
 
+            loss_data = loss.data
             loss.backward()
             self._optimizer.step()
 
-            avg_loss.update(loss.data)
-            loss_val = round(float(avg_loss.avg), 4)
-            loader_tqdm.set_postfix({'Avg loss': loss_val})
+            avg_loss.update(loss_data)
+            loader_tqdm.set_postfix({'Avg loss': round(float(avg_loss.avg), 4)})
 
-            self._writer.add_scalar('Loss', loss_val, self._i_global)
+            self._writer.add_scalar('Loss', loss_data, self._i_global)
             self._i_global += 1
 
     def test(self, n_tta: int) -> float:
@@ -117,25 +117,26 @@ class Trainer:
         gts = np.zeros(n_samples, dtype=np.int)
         preds = np.zeros_like(gts)
         confs = np.zeros_like(gts, dtype=np.float)
-        for i, (im, label) in tqdm(enumerate(loader), total=len(loader)):
-            pred, conf = self._classifier.classify(to_device(im))
+        with torch.no_grad():
+            for i, (im, label) in tqdm(enumerate(loader), total=len(loader)):
+                pred, conf = self._classifier.classify(to_device(im))
 
-            pred = pred.detach().cpu().numpy()
-            conf = conf.detach().cpu().numpy()
+                pred = pred.detach().cpu().numpy()
+                conf = conf.detach().cpu().numpy()
 
-            i_start = i * loader.batch_size
-            i_stop = min(i_start + loader.batch_size, n_samples)
+                i_start = i * loader.batch_size
+                i_stop = min(i_start + loader.batch_size, n_samples)
 
-            gts[i_start: i_stop] = label.numpy()
-            preds[i_start: i_stop] = pred
-            confs[i_start: i_stop] = conf
+                gts[i_start: i_stop] = label.numpy()
+                preds[i_start: i_stop] = pred
+                confs[i_start: i_stop] = conf
 
         mc = Calculator(gts=gts, preds=preds, confidences=confs)
         metrics = mc.calc()
 
         ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
-        self._visualize(ids=ii_worst, enums_pred=preds[ii_worst], title='Worst_mistakes')
-        self._visualize(ids=ii_best, enums_pred=preds[ii_best], title='Best_predicts')
+        self._visualize_preds(ids=ii_worst, enums_pred=preds[ii_worst], title='Worst_mistakes')
+        self._visualize_preds(ids=ii_best, enums_pred=preds[ii_best], title='Best_predicts')
         self._visualize_confusion(preds=preds, gts=gts)
         self._log_metrics(metrics=metrics, tag='Test')
         return metrics['accuracy_weighted']
@@ -188,7 +189,7 @@ class Trainer:
             logger.info(f'{name}: {val}')
             self._writer.add_scalar(f'{tag}_{name}', val, self._i_global)
 
-    def _visualize(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
+    def _visualize_preds(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
         if len(ids) == 0:
             return
 

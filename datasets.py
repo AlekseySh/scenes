@@ -120,12 +120,12 @@ def get_test_transforms(n_tta: int) -> t.Compose:
     # Test Time Augmentation (TTA) aproach
     rand_transforms = get_random_transforms()
     default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
-    augs = t.Compose([
+    transforms = t.Compose([
         t.Resize(size=SIZE),
         t.Lambda(lambda image: [rand_transforms(image) for _ in range(n_tta)]),
         t.Lambda(lambda images: [default_transforms(image) for image in images])
     ])
-    return augs
+    return transforms
 
 
 def get_random_transforms() -> t.RandomOrder:
