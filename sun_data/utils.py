@@ -105,17 +105,17 @@ def names_from_paths(im_paths: List[Path], mode: DataMode) -> List[str]:
     return names
 
 
-def get_sun_names(need_beutify: bool = False) -> List[Path]:
+def get_sun_names(need_beutify: bool = False) -> List[str]:
     sun_names = load_file(FILES_DIR / 'SunClassNames.txt')
     if need_beutify:
-        sun_names = [Path(beutify_name(name)) for name in sun_names]
+        sun_names = [beutify_name(name) for name in sun_names]
     return sun_names
 
 
 def get_name_to_enum(mode: DataMode) -> bidict:
     if mode in get_classic_modes():
-        sun_classes = get_sun_names()
-        name_to_enum = bidict({name: i for i, name in enumerate(sun_classes)})
+        sun_classes = get_sun_names(need_beutify=False)
+        name_to_enum = bidict({str(name): i for i, name in enumerate(sun_classes)})
 
     elif mode == DataMode.TAGS:
         sun_to_tags = get_sun_to_tags_mapping()
@@ -150,4 +150,4 @@ def beutify_name(sun_name: Union[Path, str]) -> str:
     beutified_name = sun_name.name
     if str(beutified_name) in sun_special_words:
         beutified_name = sun_name.parent.name
-    return beutified_name
+    return str(beutified_name)

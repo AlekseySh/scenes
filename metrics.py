@@ -9,8 +9,8 @@ class Calculator:
     _confidences: np.ndarray
 
     def __init__(self, gts: np.ndarray, preds: np.ndarray, confidences: np.ndarray):
-        assert gts.shape == preds.shape
-        assert gts.shape == confidences.shape
+        assert gts.shape == preds.shape, f'{gts.shape}, {preds.shape}'
+        assert gts.shape == confidences.shape, f'{gts.shape}, {confidences.shape}'
 
         self._gts = gts
         self._preds = preds

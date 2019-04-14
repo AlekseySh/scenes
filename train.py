@@ -41,7 +41,8 @@ def main(args: Namespace) -> float:
     trainer = Trainer(classifier=classifier, board_dir=board_dir,
                       train_set=train_set, test_set=test_set,
                       name_to_enum=name_to_enum, device=args.device,
-                      batch_size=args.batch_size)
+                      batch_size=args.batch_size, n_workers=args.n_workers,
+                      use_train_aug=args.use_train_aug)
 
     max_metric = trainer.train(n_max_epoch=args.n_max_epoch, test_freq=args.test_freq,
                                n_tta=args.n_tta, stopper=stopper, ckpt_dir=ckpt_dir)
@@ -68,18 +69,18 @@ def get_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('-d', '--data_root', dest='data_root', type=Path)
     parser.add_argument('-w', '--log_dir', dest='log_dir', type=Path)
-
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
                         default=DataMode.TAGS, help=f'One mode from {DataMode}.')
 
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
+    parser.add_argument('--use_train_aug', dest='use_train_aug', type=bool, default=True)
     parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=50)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
-    parser.add_argument('--n_tta', dest='n_tta', type=int, default=1)
-    parser.add_argument('--n_workers', dest='n_workers', type=int, default=5)
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:1')
+    parser.add_argument('--n_tta', dest='n_tta', type=int, default=0)
+    parser.add_argument('--n_workers', dest='n_workers', type=int, default=4)
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
     parser.add_argument('--random_seed', dest='seed', type=int, default=42)
 
     parser.add_argument('--n_stopper_obs', dest='n_stopper_obs', type=int, default=5,
