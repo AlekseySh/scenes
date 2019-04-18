@@ -17,7 +17,8 @@ class Arch:
     RESNET34 = 'resnet34'
     RESNET50 = 'resnet50'
     VGG11 = 'vgg11'
-    INCEPTION = 'inception'
+    VGG13 = 'vgg13'
+    INCEPTION3 = 'inception3'
 
 
 class Classifier(nn.Module):
@@ -44,7 +45,10 @@ class Classifier(nn.Module):
         elif arch == Arch.VGG11:
             self._model = models.vgg11_bn(pretrained=pretrained)
 
-        elif arch == Arch.INCEPTION:
+        elif arch == Arch.VGG13:
+            self._model = models.vgg13_bn(pretrained=pretrained)
+
+        elif arch == Arch.INCEPTION3:
             self._model = models.inception_v3(pretrained=pretrained)
 
         else:
@@ -89,12 +93,12 @@ class Classifier(nn.Module):
         return probs
 
     def _adopt_arch(self) -> None:
-        if self.arch in [Arch.RESNET18, Arch.RESNET34, Arch.RESNET50, Arch.INCEPTION]:
+        if self.arch in [Arch.RESNET18, Arch.RESNET34, Arch.RESNET50, Arch.INCEPTION3]:
             self._model.avgpool = nn.AdaptiveAvgPool2d(1)
             in_dim, out_dim = self._model.fc.in_features, self._n_classes
             self._model.fc = nn.Linear(in_dim, out_dim)
 
-        elif self.arch in [Arch.VGG11]:
+        elif self.arch in [Arch.VGG11, Arch.VGG13]:
             fc = self._model.classifier[-1]
             in_dim, out_dim = fc.in_features, fc.out_features
             self._model.classifier[-1] = nn.Linear(in_dim, out_dim)

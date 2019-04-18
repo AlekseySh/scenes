@@ -172,8 +172,10 @@ $W^{12} \equiv W^{2} W^{1}$. В этом случае модель не смог
 \end{equation}
 
 \begin{equation}\label{eq: cross_entropy}
-    L_{ce}(\vec{y_{gt}}, \vec{y}) = - \sum_{i=1}^M y_{i} \log{y^{gt}_{i}}
+    L_{ce}(\vec{y_{gt}}, \vec{y}) =  \sum_{i=1}^M \delta y_{i} \log{y^{gt}_{i}}
 \end{equation}
+
+
 
 \indent
 \indent

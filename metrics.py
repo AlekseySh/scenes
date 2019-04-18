@@ -7,6 +7,7 @@ class Calculator:
     _gts: np.ndarray
     _preds: np.ndarray
     _confidences: np.ndarray
+    samples_num: int
 
     def __init__(self, gts: np.ndarray, preds: np.ndarray, confidences: np.ndarray):
         assert gts.shape == preds.shape, f'{gts.shape}, {preds.shape}'
@@ -46,7 +47,7 @@ def calc_accuracy(gts: np.ndarray, preds: np.ndarray) -> float:
 def calc_accuracy_weighted(gts: np.ndarray, preds: np.ndarray) -> float:
     assert gts.shape == preds.shape
     acc_list = []
-    for label in np.union1d(gts, preds):
+    for label in np.unique(gts):
         w_label = gts == label
         acc = calc_accuracy(gts=gts[w_label], preds=preds[w_label])
         acc_list.append(acc)

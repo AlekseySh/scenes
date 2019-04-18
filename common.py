@@ -7,6 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import torch
 from PIL.Image import Image
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -145,12 +146,13 @@ def confusion_matrix_as_img(gts: np.ndarray,
 
 
 def histogram_as_img(categories: List[str]) -> Image:
-    fig = Figure(figsize=(16, 16))
-    canvas = FigureCanvas(fig)
-    ax = fig.gca()
-    countplot(ax=ax, x='category', data=pd.DataFrame({'category': categories}))
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor")
-    fig.tight_layout()
-    pil_image = canvas_to_img(canvas)
+    with sns.plotting_context(font_scale=1.5):
+        fig = Figure(figsize=(16, 16))
+        canvas = FigureCanvas(fig)
+        ax = fig.gca()
+        countplot(ax=ax, x='category', data=pd.DataFrame({'category': categories}))
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+        fig.tight_layout()
+        pil_image = canvas_to_img(canvas)
     return pil_image

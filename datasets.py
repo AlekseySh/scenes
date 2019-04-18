@@ -1,4 +1,5 @@
 import logging
+import resource
 from pathlib import Path
 from typing import Tuple, List
 
@@ -11,6 +12,9 @@ from torch import Tensor
 from torch.utils.data import Dataset
 
 from common import put_text_to_image
+
+rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+resource.setrlimit(resource.RLIMIT_NOFILE, (10000, rlimit[1]))
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)
@@ -38,6 +42,7 @@ class ImagesDataset(Dataset):
         self._im_paths = im_paths
         self._labels_enum = labels_enum
         self._transforms = None
+        logger.info(f'Dataset created with size {len(self)}')
 
     def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
         assert self._transforms is not None
@@ -57,7 +62,9 @@ class ImagesDataset(Dataset):
 
         abs_path = self._data_root / local_path
 
-        pil_image = PIL.Image.open(abs_path).convert('RGB')
+        with PIL.Image.open(abs_path) as im:
+            pil_image = im.convert('RGB')
+            im.close()
         return pil_image
 
     def set_default_transforms(self) -> None:
@@ -70,7 +77,7 @@ class ImagesDataset(Dataset):
         self._transforms = get_test_transforms(n_tta=n_augs)
 
     @property
-    def labels_enum(self):
+    def labels_enum(self) -> List[int]:
         return self._labels_enum
 
     # VISUALISATION
@@ -92,7 +99,7 @@ class ImagesDataset(Dataset):
                            color: Tuple[int, int, int]
                            ) -> Tensor:
         layout = torch.zeros([n_samples, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
-        ii_class = np.squeeze(np.nonzero(np.array(self._labels_enum) == class_num))
+        ii_class = np.nonzero(np.array(self._labels_enum) == class_num)[0]
         ii_sampels = np.random.choice(ii_class, size=n_samples)
         for i, ind in enumerate(ii_sampels):
             layout[i, :, :, :] = self.get_signed_image(idx=ind, color=color, text=text)

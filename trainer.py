@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import List
 
@@ -21,6 +22,11 @@ from network import Classifier, Arch
 from sun_data.utils import beutify_name
 
 logger = logging.getLogger(__name__)
+
+
+class Mode(Enum):
+    TRAIN = 'train'
+    TEST = 'test'
 
 
 class Trainer:
@@ -77,16 +83,19 @@ class Trainer:
         loader = DataLoader(dataset=self._train_set,
                             batch_size=self._batch_size,
                             num_workers=self._num_workers,
-                            shuffle=True
+                            shuffle=True, drop_last=True
                             )
 
         avg_loss = OnlineAvg()
         loader_tqdm = tqdm(loader, total=len(loader))
-        gts, preds, probs = [], [], []
+
+        gts: List[int] = []
+        preds: List[int] = []
+        probs: List[float] = []
         for im, label in loader_tqdm:
             self._optimizer.zero_grad()
 
-            if self._classifier.arch == Arch.INCEPTION:
+            if self._classifier.arch == Arch.INCEPTION3:
                 logits, aux_output = self._classifier(im.to(self._device))
                 loss1 = self._criterion(logits, label.to(self._device))
                 loss2 = self._criterion(aux_output, label.to(self._device))
@@ -96,11 +105,12 @@ class Trainer:
                 logits = self._classifier(im.to(self._device))
                 loss = self._criterion(logits, label.to(self._device))
 
-            loss_data = loss.data
+            loss_data = loss.detach().cpu().numpy()
+            self._writer.add_scalar('Loss', loss_data, self._i_global)
+
             loss.backward()
             self._optimizer.step()
 
-            avg_loss.update(loss_data)
             max_logits, ii_max = logits.max(dim=1)
             prob = softmax(max_logits, dim=0).detach().cpu().numpy().tolist()
             pred = ii_max.detach().cpu().numpy().tolist()
@@ -109,12 +119,12 @@ class Trainer:
             preds.extend(pred)
             probs.extend(prob)
 
+            avg_loss.update(loss_data)
             loader_tqdm.set_postfix({'Avg loss': round(float(avg_loss.avg), 4)})
             self._writer.add_scalar('Loss', loss_data, self._i_global)
             self._i_global += 1
 
-        main_metric = self._log_metrics(gts, preds, probs,
-                                        tag='Train', img_verbose=False)
+        main_metric = self._log_metrics(gts, preds, probs, Mode.TRAIN, img_verbose=True)
         return main_metric
 
     def test(self, n_tta: int) -> float:
@@ -134,7 +144,9 @@ class Trainer:
         loader = DataLoader(dataset=self._test_set, batch_size=batch_size_tta,
                             num_workers=self._num_workers, shuffle=False)
 
-        gts, preds, probs = [], [], []
+        gts: List[int] = []
+        preds: List[int] = []
+        probs: List[float] = []
         with torch.no_grad():
             for i, (im, label) in tqdm(enumerate(loader), total=len(loader)):
                 pred, prob = self._classifier.classify(to_device(im))
@@ -146,8 +158,7 @@ class Trainer:
                 preds.extend(pred)
                 probs.extend(prob)
 
-        main_metric = self._log_metrics(gts, preds, probs,
-                                        tag='Test', img_verbose=False)
+        main_metric = self._log_metrics(gts, preds, probs, Mode.TEST, img_verbose=True)
         return main_metric
 
     def train(self,
@@ -201,7 +212,7 @@ class Trainer:
                      gts: List[int],
                      preds: List[int],
                      probs: List[float],
-                     tag: str,
+                     mode: Mode,
                      img_verbose: bool = False
                      ) -> float:
         gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
@@ -211,38 +222,54 @@ class Trainer:
 
         for name, val in metrics.items():
             logger.info(f'{name}: {val}')
-            self._writer.add_scalar(f'{tag}_{name}', val, self._i_global)
+            self._writer.add_scalar(f'{mode}_{name}', val, self._i_global)
 
         if img_verbose:
             ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
-            self._visualize_preds(ids=ii_worst, enums_pred=preds[ii_worst], title=f'{tag}/Worst_mistakes')
-            self._visualize_preds(ids=ii_best, enums_pred=preds[ii_best], title=f'{tag}/Best_predicts')
+            self._visualize_preds(ids=ii_worst, enums_pred=preds[ii_worst], mode=mode, tag='worst_mistakes')
+            self._visualize_preds(ids=ii_best, enums_pred=preds[ii_best], mode=mode, tag='best_predicts')
             self._visualize_confusion(preds=preds, gts=gts)
 
         main_metric = metrics['accuracy_weighted']
         return main_metric
 
-    def _visualize_preds(self, ids: np.ndarray, enums_pred: np.ndarray, title: str) -> None:
+    def _visualize_preds(self,
+                         ids: np.ndarray,
+                         enums_pred: np.ndarray,
+                         mode: Mode,
+                         tag: str
+                         ) -> None:
         if len(ids) == 0:
             return
+
+        if mode == Mode.TRAIN:
+            dataset = self._train_set
+        elif mode == Mode.TEST:
+            dataset = self._test_set
+        else:
+            raise ValueError(f'Unexpected mode {mode}.')
+
+        assert max(ids) < len(dataset)
+
+        dataset.set_default_transforms()
 
         base_color, gt_color, err_color = (0, 0, 0), (0, 255, 0), (255, 0, 0)
         n_gt_samples, n_pred_samples = 2, 2
 
         layer_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
         for (idx, enum_pred) in zip(ids, enums_pred):
-            _, enum_gt = self._test_set[idx]
+            _, enum_gt = dataset[idx]
             name_gt = beutify_name(self._name_to_enum.inv[enum_gt])
             name_pred = beutify_name(self._name_to_enum.inv[enum_pred])
 
-            main_img = self._test_set.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
-                                                       idx=idx, color=base_color)
+            main_img = dataset.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
+                                                idx=idx, color=base_color)
 
-            gt_imgs = self._test_set.draw_class_samples(
+            gt_imgs = dataset.draw_class_samples(
                 n_samples=n_gt_samples, class_num=enum_gt, color=gt_color, text=[name_gt])
 
             pred_color = gt_color if enum_gt == enum_pred else err_color
-            pred_imgs = self._test_set.draw_class_samples(
+            pred_imgs = dataset.draw_class_samples(
                 n_samples=n_pred_samples, class_num=enum_pred, color=pred_color, text=[name_pred])
 
             layer_tensor = torch.cat(
@@ -251,7 +278,7 @@ class Trainer:
         grid = vutils.make_grid(tensor=layer_tensor, nrow=n_gt_samples + n_pred_samples + 1,
                                 normalize=False, scale_each=False)
 
-        self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=title)
+        self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=f'{mode}/{tag}')
 
     def _visualize_confusion(self, preds: np.ndarray, gts: np.ndarray) -> None:
         class_names = [self._name_to_enum.inv[num] for num in range(0, len(self._name_to_enum))]
@@ -260,8 +287,8 @@ class Trainer:
                                img_tensor=t.ToTensor()(conf_mat))
 
     def _visualize_hist(self) -> None:
-        labels_enum = self._train_set.labels_enum
-        labels_enum.extend(self._test_set.labels_enum)
+        labels_enum = self._train_set.labels_enum.copy()
+        labels_enum.extend(self._test_set.labels_enum.copy())
         names = [self._name_to_enum.inv[enum] for enum in labels_enum]
         histogram = histogram_as_img(names)
         self._writer.add_image(global_step=self._i_global, tag='Histogram.',
