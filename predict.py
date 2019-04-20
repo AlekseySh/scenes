@@ -1,10 +1,10 @@
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import PIL
 import numpy as np
-from torch import device as Device
+import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -16,9 +16,9 @@ from sun_data.utils import get_name_to_enum, DataMode
 
 def predict_arr(model: Classifier,
                 im_paths: List[Path],
-                device: Device,
+                device: torch.device,
                 batch_size: int
-                ) -> List[int]:
+                ) -> Tuple[List[int], List[float]]:
     model.to(device)
     dataset = ImagesDataset(data_root=Path('/'),
                             im_paths=im_paths,
@@ -31,32 +31,38 @@ def predict_arr(model: Classifier,
                         num_workers=4
                         )
     labels: List[int] = []
+    probs: List[float] = []
     for im, _ in tqdm(loader):
-        label, _ = model.classify(im.to(device))
-        labels.extend(label.detach().cpu().numpy().tolist())
+        label, prob = model.classify(im.to(device))
+        labels.extend(label.detach().cpu().tolist())
+        probs.extend(prob.detach().cpu().tolist())
 
-    return labels
+    return labels, probs
 
 
-def sign_and_save(im_paths: List[Path], names: List[str], save_dir: Path) -> None:
-    for im_path, name in zip(im_paths, names):
+def sign_and_save(im_paths: List[Path],
+                  names: List[str],
+                  probs: List[float],
+                  save_dir: Path
+                  ) -> None:
+    for im_path, prob, name in zip(im_paths, names, probs):
         image = np.array(PIL.Image.open(im_path).convert('RGB'))
         image_signed = put_text_to_image(image=image, strings=[name])
         image_signed = PIL.Image.fromarray(image_signed).convert('RGB')
-        image_signed.save(save_dir / im_path.name)
+        image_signed.save(save_dir / f'{round(prob, 3)}_{im_path.name}')
 
 
 def main(args: Namespace) -> None:
     model, _ = Classifier.from_ckpt(args.ckpt_path)
 
     im_paths = list(args.im_dir.glob('**/*.jpg'))
-    labels = predict_arr(model=model, im_paths=im_paths,
-                         device=args.device, batch_size=args.batch_size)
+    labels, probs = predict_arr(model=model, im_paths=im_paths,
+                                device=args.device, batch_size=args.batch_size)
 
     name_to_enum = get_name_to_enum(DataMode.TAGS)
-    names = [name_to_enum.inv[label] for label in labels]
+    names = [name_to_enum.inv[label] for label, prob in zip(labels, probs)]
 
-    sign_and_save(im_paths, names, args.save_dir)
+    sign_and_save(im_paths, names, probs, args.save_dir)
 
 
 def get_parser() -> ArgumentParser:
@@ -68,7 +74,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--save_dir', dest='save_dir', type=Path)
     parser.add_argument('--ckpt_path', dest='ckpt_path', type=Path)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=190)
-    parser.add_argument('--device', dest='device', type=Device, default='cuda:3')
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
     return parser
 
 

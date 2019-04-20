@@ -120,7 +120,7 @@ def get_name_to_enum(mode: DataMode) -> bidict:
 
     elif mode == DataMode.TAGS:
         sun_to_tags = get_sun_to_tags_mapping()
-        tags = set(sun_to_tags.values())
+        tags = sorted(set(sun_to_tags.values()))
         name_to_enum = bidict({tag: i for i, tag in enumerate(tags)})
 
     else:

@@ -68,13 +68,13 @@ class ImagesDataset(Dataset):
         return pil_image
 
     def set_default_transforms(self) -> None:
-        self._transforms = get_default_transforms()
+        self._transforms = _get_default_transf()
 
-    def set_train_transforms(self) -> None:
-        self._transforms = get_train_transforms()
+    def set_train_transforms(self, aug_degree: float) -> None:
+        self._transforms = _get_train_transf(aug_degree)
 
-    def set_test_transforms(self, n_augs: int) -> None:
-        self._transforms = get_test_transforms(n_tta=n_augs)
+    def set_test_transforms(self, n_augs: int, aug_degree: float) -> None:
+        self._transforms = _get_test_transf(n_augs, aug_degree)
 
     @property
     def labels_enum(self) -> List[int]:
@@ -106,7 +106,7 @@ class ImagesDataset(Dataset):
         return layout
 
 
-def get_default_transforms() -> t.Compose:
+def _get_default_transf() -> t.Compose:
     transforms = t.Compose([t.Resize(size=SIZE),
                             t.ToTensor(),
                             t.Normalize(mean=MEAN, std=STD)]
@@ -114,40 +114,49 @@ def get_default_transforms() -> t.Compose:
     return transforms
 
 
-def get_train_transforms() -> t.Compose:
-    transforms = t.Compose([t.Resize(size=SIZE),
-                            get_random_transforms(),
-                            t.ToTensor(),
-                            t.Normalize(mean=MEAN, std=STD)]
-                           )
+def _get_train_transf(aug_degree: float) -> t.Compose:
+    transforms = t.Compose([
+        t.Resize(size=SIZE),
+        _get_rand_transf(aug_degree),
+        t.Resize(size=SIZE),
+        t.ToTensor(),
+        t.Normalize(mean=MEAN, std=STD)]
+    )
     return transforms
 
 
-def get_test_transforms(n_tta: int) -> t.Compose:
+def _get_test_transf(n_tta: int, aug_degree: float) -> t.Compose:
     # Test Time Augmentation (TTA) aproach
-    rand_transforms = get_random_transforms()
     default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
     transforms = t.Compose([
         t.Resize(size=SIZE),
-        t.Lambda(lambda image: [rand_transforms(image) for _ in range(n_tta)]),
+        t.Lambda(lambda image: [_get_rand_transf(aug_degree)(image) for _ in range(n_tta)]),
+        t.Lambda(lambda images: [t.Resize(size=SIZE)(image) for image in images]),
         t.Lambda(lambda images: [default_transforms(image) for image in images])
     ])
     return transforms
 
 
-def get_random_transforms(k: int = 1) -> t.RandomOrder:
-    crop_k = k * 0.9
-    degree = k * 10
-    color_k = k * 0.3
-    apply_prob = k * 0.5
+def _get_rand_transf(k: float) -> t.RandomOrder:
+    assert k > 0
 
+    crop_k = 1 - k * 0.1
     crop_sz = (int(crop_k * SIZE[0]), int(crop_k * SIZE[1]))
 
     aug_list = [
         t.functional.hflip,
-        t.Compose([t.RandomCrop(size=crop_sz), t.Resize(size=SIZE)]),
-        t.RandomRotation(degrees=(-degree, degree)),
-        t.ColorJitter(brightness=color_k, contrast=color_k, saturation=color_k)
+        t.RandomCrop(size=crop_sz),
+        t.RandomAffine(degrees=k * 10,
+                       translate=(0.1 * k, 0.1 * k),
+                       scale=(1 - 0.1 * k, 1 + 0.1 * k),
+                       shear=k * 5,
+                       fillcolor=0
+                       ),
+        t.ColorJitter(brightness=0.1 * k,
+                      contrast=0.1 * k,
+                      saturation=0.1 * k,
+                      hue=0.1 * k
+                      )
     ]
-    rand_transforms = t.RandomOrder([t.RandomApply([aug], p=apply_prob) for aug in aug_list])
-    return rand_transforms
+    transforms = t.RandomOrder([t.RandomApply([aug], p=0.4 + 0.1 * k) for aug in aug_list])
+    return transforms

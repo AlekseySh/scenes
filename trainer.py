@@ -38,7 +38,7 @@ class Trainer:
     _device: torch.device
     _batch_size: int
     _num_workers: int
-    _use_train_aug: bool
+    _aug_degree: float
 
     _criterion: nn.Module
     _optimizer: Optimizer
@@ -53,7 +53,8 @@ class Trainer:
                  device: torch.device,
                  batch_size: int,
                  n_workers: int,
-                 use_train_aug: bool
+                 aug_degree: float,
+                 init_lr: float
                  ):
 
         self._classifier = classifier
@@ -64,10 +65,11 @@ class Trainer:
         self._device = device
         self._batch_size = batch_size
         self._num_workers = n_workers
-        self._use_train_aug = use_train_aug
+        self._aug_degree = aug_degree
 
         self._criterion = nn.CrossEntropyLoss()
-        self._optimizer = optim.SGD(self._classifier.parameters(), lr=1e-1)
+        self._optimizer = optim.SGD(self._classifier.parameters(), lr=init_lr)
+
         self._writer = SummaryWriter(str(self._board_dir))
 
         self._i_global = 0
@@ -75,8 +77,8 @@ class Trainer:
 
     def train_epoch(self) -> float:
         self._classifier.train()
-        if self._use_train_aug:
-            self._train_set.set_train_transforms()
+        if self._aug_degree > 0:
+            self._train_set.set_train_transforms(aug_degree=self._aug_degree)
         else:
             self._train_set.set_default_transforms()
 
@@ -129,7 +131,7 @@ class Trainer:
 
     def test(self, n_tta: int) -> float:
         if n_tta != 0:
-            self._test_set.set_test_transforms(n_augs=n_tta)
+            self._test_set.set_test_transforms(n_augs=n_tta, aug_degree=self._aug_degree)
             batch_size_tta = int(self._batch_size / n_tta)
 
             def to_device(x_arr):
@@ -200,6 +202,7 @@ class Trainer:
 
         if n_tta > 0:
             self._classifier, _ = Classifier.from_ckpt(best_ckpt_path)
+            self._classifier.to(self._device)
             logger.info('Try improve this value with TTA:')
             acc_tta = self.test(n_tta=n_tta)
             logger.info(f'Metric value with TTA: {acc_tta}')
@@ -270,7 +273,8 @@ class Trainer:
 
             pred_color = gt_color if enum_gt == enum_pred else err_color
             pred_imgs = dataset.draw_class_samples(
-                n_samples=n_pred_samples, class_num=enum_pred, color=pred_color, text=[name_pred])
+                n_samples=n_pred_samples, class_num=enum_pred,
+                color=pred_color, text=[name_pred])
 
             layer_tensor = torch.cat(
                 [layer_tensor, main_img.unsqueeze(dim=0), gt_imgs, pred_imgs], dim=0)
@@ -287,7 +291,8 @@ class Trainer:
                                img_tensor=t.ToTensor()(conf_mat))
 
     def _visualize_hist(self) -> None:
-        labels_enum = self._train_set.labels_enum.copy()
+        labels_enum = []
+        labels_enum.extend(self._train_set.labels_enum.copy())
         labels_enum.extend(self._test_set.labels_enum.copy())
         names = [self._name_to_enum.inv[enum] for enum in labels_enum]
         histogram = histogram_as_img(names)

@@ -119,10 +119,10 @@ class Classifier(nn.Module):
     @classmethod
     def from_ckpt(cls, path_to_ckpt: Path) -> Tuple[nn.Module, Any]:
         checkpoint = torch.load(path_to_ckpt, map_location='cpu')
-        arch = Arch.RESNET34  # checkpoint['arch'] todo
-        n_classes = 21  # checkpoint['n_classes'] todo
-        classifier = cls(arch=arch, n_classes=n_classes, pretrained=False)
-        classifier._model.load_state_dict(checkpoint['state_dict'])
+        classifier = cls(arch=checkpoint['arch'],
+                         n_classes=checkpoint['n_classes'],
+                         pretrained=False)
         classifier._adopt_arch()
+        classifier._model.load_state_dict(checkpoint['state_dict'])
         meta = checkpoint['meta']
         return classifier, meta
