@@ -109,13 +109,16 @@ class Classifier(nn.Module):
     def save(self, path: Path, meta: Any) -> None:
         checkpoint = {
             'state_dict': self._model.state_dict(),
+            'arch': self.arch,
             'meta': meta
         }
         torch.save(checkpoint, path)
         logger.info(f'Model saved to {path}.')
 
-    def load(self, path_to_ckpt: Path) -> Any:
-        checkpoint = torch.load(path_to_ckpt)
-        self._model.load_state_dict(checkpoint['state_dict'])
+    @classmethod
+    def from_ckpt(cls, path_to_ckpt: Path) -> Tuple[nn.Module, Any]:
+        checkpoint = torch.load(path_to_ckpt, map_location='cpu')
+        classifier = cls(arch=checkpoint['arch'], pretrained=False)
+        classifier.load_state_dict(checkpoint['state_dict'])
         meta = checkpoint['meta']
-        return meta
+        return classifier, meta

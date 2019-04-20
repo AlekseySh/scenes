@@ -135,11 +135,11 @@ def get_test_transforms(n_tta: int) -> t.Compose:
     return transforms
 
 
-def get_random_transforms() -> t.RandomOrder:
-    crop_k = 0.9
-    degree = 10
-    color_k = 0.3
-    apply_prob = 0.5
+def get_random_transforms(k: int = 1) -> t.RandomOrder:
+    crop_k = k * 0.9
+    degree = k * 10
+    color_k = k * 0.3
+    apply_prob = k * 0.5
 
     crop_sz = (int(crop_k * SIZE[0]), int(crop_k * SIZE[1]))
 

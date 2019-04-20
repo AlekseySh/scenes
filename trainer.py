@@ -67,7 +67,7 @@ class Trainer:
         self._use_train_aug = use_train_aug
 
         self._criterion = nn.CrossEntropyLoss()
-        self._optimizer = optim.Adam(self._classifier.parameters())
+        self._optimizer = optim.SGD(self._classifier.parameters(), lr=1e-1)
         self._writer = SummaryWriter(str(self._board_dir))
 
         self._i_global = 0
@@ -199,7 +199,7 @@ class Trainer:
         logger.info(f'Max metric {acc_max} reached at {best_epoch} epoch.')
 
         if n_tta > 0:
-            self._classifier.load(best_ckpt_path)
+            self._classifier = Classifier.from_ckpt(best_ckpt_path)
             logger.info('Try improve this value with TTA:')
             acc_tta = self.test(n_tta=n_tta)
             logger.info(f'Metric value with TTA: {acc_tta}')

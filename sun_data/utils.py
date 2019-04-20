@@ -6,7 +6,8 @@ from typing import List, Tuple, Dict, Union
 import pandas as pd
 from bidict import bidict
 
-__all__ = ['DataMode', 'load_data', 'get_sun_names', 'beutify_name']
+__all__ = ['DataMode', 'load_data', 'get_sun_names',
+           'beutify_name', 'get_name_to_enum']
 
 FILES_DIR = Path(__file__).parent / 'files'
 SPLITS_DIR = FILES_DIR / 'splits'
