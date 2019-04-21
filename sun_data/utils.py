@@ -107,9 +107,11 @@ def names_from_paths(im_paths: List[Path], mode: DataMode) -> List[str]:
 
 
 def get_sun_names(need_beutify: bool = False) -> List[str]:
-    sun_names = load_file(FILES_DIR / 'SunClassNames.txt')
+    sun_paths = load_file(FILES_DIR / 'SunClassNames.txt')
     if need_beutify:
-        sun_names = [beutify_name(name) for name in sun_names]
+        sun_names = [beutify_name(name) for name in sun_paths]
+    else:
+        sun_names = [str(name) for name in sun_paths]
     return sun_names
 
 

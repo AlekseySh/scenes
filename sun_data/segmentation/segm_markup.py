@@ -2,8 +2,7 @@ import gzip
 import pickle
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import xmltodict
@@ -11,7 +10,7 @@ from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 
-def main(data_dir: Path, save_dir: Path):
+def main(data_dir: Path, save_dir: Path) -> None:
     annot_paths = list(data_dir.glob('**/*.xml'))
 
     for annot_path in tqdm(annot_paths):
@@ -38,7 +37,7 @@ def main(data_dir: Path, save_dir: Path):
 def xml_to_mask(xml_content: str,
                 width: int,
                 height: int
-                ) -> (np.ndarray, List[str], str):
+                ) -> Tuple[np.ndarray, List[str], str]:
     data = xmltodict.parse(xml_content)
 
     folder = Path(data['annotation']['folder'])

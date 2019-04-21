@@ -45,7 +45,7 @@ def sign_and_save(im_paths: List[Path],
                   probs: List[float],
                   save_dir: Path
                   ) -> None:
-    for im_path, prob, name in zip(im_paths, names, probs):
+    for im_path, name, prob in zip(im_paths, names, probs):
         image = np.array(PIL.Image.open(im_path).convert('RGB'))
         image_signed = put_text_to_image(image=image, strings=[name])
         image_signed = PIL.Image.fromarray(image_signed).convert('RGB')
@@ -62,7 +62,7 @@ def main(args: Namespace) -> None:
     name_to_enum = get_name_to_enum(DataMode.TAGS)
     names = [name_to_enum.inv[label] for label, prob in zip(labels, probs)]
 
-    sign_and_save(im_paths, names, probs, args.save_dir)
+    sign_and_save(im_paths=im_paths, names=names, probs=probs, save_dir=args.save_dir)
 
 
 def get_parser() -> ArgumentParser:

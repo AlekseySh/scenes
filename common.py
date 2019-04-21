@@ -7,7 +7,6 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import torch
 from PIL.Image import Image
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -32,25 +31,6 @@ def beutify_args(args: Namespace) -> str:
         string = f'{arg}: {getattr(args, arg)} \n'
         text += string
     return text
-
-
-def put_text_to_image(image: np.ndarray,
-                      strings: List[str],
-                      str_height: int = 25,
-                      color: Tuple[int, int, int] = (0, 0, 0),
-                      ) -> np.ndarray:
-    image = image.astype(np.uint8)
-
-    for i, string in enumerate(strings):
-        image = cv2.putText(img=image,
-                            org=(5, (i + 1) * str_height),
-                            text=string,
-                            fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                            fontScale=1,
-                            thickness=2,
-                            color=color
-                            )
-    return image
 
 
 class OnlineAvg:
@@ -101,6 +81,26 @@ class Stopper:
             self._max_val = self._cur_val
 
 
+# VISUALISATION
+
+def put_text_to_image(image: np.ndarray,
+                      strings: List[str],
+                      str_height: int = 25,
+                      color: Tuple[int, int, int] = (0, 0, 0),
+                      ) -> np.ndarray:
+    image = image.astype(np.uint8)
+    for i, string in enumerate(strings):
+        image = cv2.putText(img=image,
+                            org=(5, (i + 1) * str_height),
+                            text=string,
+                            fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                            fontScale=1,
+                            thickness=2,
+                            color=color
+                            )
+    return image
+
+
 def canvas_to_img(canvas: FigureCanvas) -> PIL.Image:
     canvas.draw()
     string, (width, height) = canvas.print_to_buffer()
@@ -113,7 +113,8 @@ def confusion_matrix_as_img(gts: np.ndarray,
                             preds: np.ndarray,
                             classes: List[str]
                             ) -> Image:
-    conf_mat = confusion_matrix(gts, preds)
+    font = 20
+    conf_mat = confusion_matrix(y_true=gts, y_pred=preds)
     classes = np.array(classes)[unique_labels(gts, preds)]
 
     conf_mat = conf_mat.astype('float') / conf_mat.sum(axis=1)[:, np.newaxis]
@@ -129,15 +130,20 @@ def confusion_matrix_as_img(gts: np.ndarray,
            xticklabels=classes, yticklabels=classes,
            ylabel='Ground Truth', xlabel='Predicted')
 
+    ax.xaxis.label.set_fontsize(font)
+    ax.yaxis.label.set_fontsize(font)
+
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor")
+             rotation_mode="anchor", fontsize=font)
+    plt.setp(ax.get_yticklabels(), fontsize=font)
 
     for i in range(conf_mat.shape[0]):
         for j in range(conf_mat.shape[1]):
             ax.text(j, i,
                     format(conf_mat[i, j], '.2f'),
                     ha="center", va="center",
-                    color="white" if conf_mat[i, j] > conf_mat.max() / 2. else "black"
+                    color="white" if conf_mat[i, j] > conf_mat.max() / 2. else "black",
+                    size=font
                     )
 
     fig.tight_layout()
@@ -146,13 +152,25 @@ def confusion_matrix_as_img(gts: np.ndarray,
 
 
 def histogram_as_img(categories: List[str]) -> Image:
-    with sns.plotting_context(font_scale=1.5):
-        fig = Figure(figsize=(16, 16))
-        canvas = FigureCanvas(fig)
-        ax = fig.gca()
-        countplot(ax=ax, x='category', data=pd.DataFrame({'category': categories}))
-        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-                 rotation_mode="anchor")
-        fig.tight_layout()
-        pil_image = canvas_to_img(canvas)
+    font = 20
+
+    fig = Figure(figsize=(16, 16))
+    canvas = FigureCanvas(fig)
+    ax = fig.gca()
+
+    df = pd.DataFrame({'category': categories})
+    countplot(ax=ax, x='category', color='b',
+              data=df, order=df['category'].value_counts().index)
+
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor", fontsize=font)
+
+    for item in [ax.title, ax.xaxis.label, ax.yaxis.label]:
+        item.set_fontsize(1.2 * font)
+
+    for item in (ax.get_xticklabels() + ax.get_yticklabels()):
+        item.set_fontsize(font)
+
+    fig.tight_layout()
+    pil_image = canvas_to_img(canvas)
     return pil_image

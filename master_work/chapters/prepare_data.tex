@@ -143,13 +143,14 @@
 популярными считаются теги, использованные в сети
 \textit{Instagram} более \textit{10 млн.} раз. При этом среднее число упоминаний 
 отобранных тегов составило \textit{100 млн.} раз, а
-максимальное --- \textit{450 млн.}. Полная информация о частоте встречаемости
-для всех хэштегов приведена на рисунке ~\ref{tikzpicture: tags_counts}.
+максимальное --- \textit{450 млн.}. Полная информация о встречаемости
+хэштегов в сети \textit{Instagram} приведена на рисунке ~\ref{tikzpicture: tags_counts},
+а о встречаемости в датасете \textit{SUN} -- на рисунке \ref{tikzpicture: sun_tags}.
 
 
 % Гистограмма встречаемости хэштегов
 \begin{center}
-    \begin{figure}[h]
+    \begin{figure}[h!]
     \begin{tikzpicture}
     \label{tags_counts}
         \begin{axis}[
@@ -206,10 +207,20 @@
             };
         \end{axis}
     \end{tikzpicture}
-    \caption{Встречаемость предсказываемых хэштегов в социальной сети \textit{Instagram}.}
+    \caption{Встречаемость отобранных хэштегов в социальной сети \textit{Instagram}.}
     \label{tikzpicture: tags_counts}
     \end{figure}
 \end{center}
+
+
+\begin{figure}[h!]
+    \begin{center}
+   	    \includegraphics[width=0.95\linewidth]{sun_tags}
+   	\end{center}
+   	\caption{Распределение хэштегов в датасете \textit{SUN}.}
+   	\label{tikzpicture: sun_tags}
+\end{figure}
+
 
 
 \indent 

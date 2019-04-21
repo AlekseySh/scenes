@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 
-def mask_center(bin_mask: np.ndarray) -> (int, int):
+def mask_center(bin_mask: np.ndarray) -> Tuple[int, int]:
     assert np.sum(bin_mask) > 0
 
     moments = cv2.moments(bin_mask.astype(np.uint8))
@@ -53,7 +53,7 @@ def display_instances(image: np.ndarray,
 
 def apply_mask(image: np.ndarray,
                mask: np.ndarray,
-               color: List,
+               color: Tuple[float, float, float],
                alpha: float = 0.5
                ) -> np.ndarray:
     for c in range(3):
