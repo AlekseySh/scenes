@@ -18,10 +18,9 @@ resource.setrlimit(resource.RLIMIT_NOFILE, (10000, rlimit[1]))
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)
-SIZE = (256, 256)  # 299 for inception, 224 others
+SIZE = (512, 512)  # 299 for inception, 224 others
 
 logger = logging.getLogger(__name__)
-logger.info(f'Using image size: {SIZE}')
 
 
 class ImagesDataset(Dataset):
@@ -42,7 +41,10 @@ class ImagesDataset(Dataset):
         self._im_paths = im_paths
         self._labels_enum = labels_enum
         self._transforms = None
+
         logger.info(f'Dataset created with size {len(self)}')
+        logger.info(f'Using image size: {SIZE}')
+        assert str(SIZE[0]) in str(data_root)  # todo remove it
 
     def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
         assert self._transforms is not None
@@ -64,7 +66,8 @@ class ImagesDataset(Dataset):
 
         with PIL.Image.open(abs_path) as im:
             pil_image = im.convert('RGB')
-            im.close()
+            assert pil_image.size == SIZE, \
+                'Assumed, that stored images already resized.'
         return pil_image
 
     def set_default_transforms(self) -> None:
@@ -107,16 +110,12 @@ class ImagesDataset(Dataset):
 
 
 def _get_default_transf() -> t.Compose:
-    transforms = t.Compose([t.Resize(size=SIZE),
-                            t.ToTensor(),
-                            t.Normalize(mean=MEAN, std=STD)]
-                           )
+    transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
     return transforms
 
 
 def _get_train_transf(aug_degree: float) -> t.Compose:
     transforms = t.Compose([
-        t.Resize(size=SIZE),
         _get_rand_transf(aug_degree),
         t.Resize(size=SIZE),
         t.ToTensor(),
@@ -127,12 +126,10 @@ def _get_train_transf(aug_degree: float) -> t.Compose:
 
 def _get_test_transf(n_tta: int, aug_degree: float) -> t.Compose:
     # Test Time Augmentation (TTA) aproach
-    default_transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
     transforms = t.Compose([
-        t.Resize(size=SIZE),
         t.Lambda(lambda image: [_get_rand_transf(aug_degree)(image) for _ in range(n_tta)]),
         t.Lambda(lambda images: [t.Resize(size=SIZE)(image) for image in images]),
-        t.Lambda(lambda images: [default_transforms(image) for image in images])
+        t.Lambda(lambda images: [_get_default_transf(image) for image in images])
     ])
     return transforms
 

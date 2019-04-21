@@ -54,6 +54,7 @@ class Trainer:
                  batch_size: int,
                  n_workers: int,
                  aug_degree: float,
+                 optimizer: str,
                  init_lr: float
                  ):
 
@@ -68,12 +69,17 @@ class Trainer:
         self._aug_degree = aug_degree
 
         self._criterion = nn.CrossEntropyLoss()
-        self._optimizer = optim.SGD(self._classifier.parameters(), lr=init_lr)
 
-        self._writer = SummaryWriter(str(self._board_dir))
+        if optimizer.lower() == 'sgd':
+            self._optimizer = optim.SGD(self._classifier.parameters(), lr=init_lr)
+        elif optimizer.lower() == 'adam':
+            self._optimizer = optim.Adam(self._classifier.parameters(), lr=init_lr)
+        else:
+            raise ValueError(f'Unexpected optimizer: {optimizer}')
 
         self._i_global = 0
         self._classifier.to(self._device)
+        self._writer = SummaryWriter(str(self._board_dir))
 
     def train_epoch(self) -> float:
         self._classifier.train()
@@ -126,7 +132,7 @@ class Trainer:
             self._writer.add_scalar('Loss', loss_data, self._i_global)
             self._i_global += 1
 
-        main_metric = self._log_metrics(gts, preds, probs, Mode.TRAIN, img_verbose=True)
+        main_metric = self._log_metrics(gts, preds, probs, Mode.TRAIN)
         return main_metric
 
     def test(self, n_tta: int) -> float:
@@ -161,16 +167,16 @@ class Trainer:
                 preds.extend(pred)
                 probs.extend(prob)
 
-        main_metric = self._log_metrics(gts, preds, probs, Mode.TEST, img_verbose=True)
+        main_metric = self._log_metrics(gts, preds, probs, Mode.TEST)
+
+        gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
+        mc = Calculator(gts=gts, preds=preds, confidences=probs)
+        ii_worst, ii_best = mc.worst_errors(n_worst=16), mc.best_preds(n_best=16)
+        self._visualize_preds(ii_worst, preds[ii_worst], tag='test/worst_mistakes', draw_samples=False)
+        self._visualize_preds(ii_best, preds[ii_best], tag='test/best_predicts', draw_samples=False)
         return main_metric
 
-    def train(self,
-              n_max_epoch: int,
-              test_freq: int,
-              n_tta: int,
-              stopper: Stopper,
-              ckpt_dir: Path
-              ) -> float:
+    def train(self, n_max_epoch: int, test_freq: int, n_tta: int, stopper: Stopper, ckpt_dir: Path) -> float:
 
         self._visualize_hist()
 
@@ -212,78 +218,62 @@ class Trainer:
         else:
             return acc_max
 
-    def _log_metrics(self,
-                     gts: List[int],
-                     preds: List[int],
-                     probs: List[float],
-                     mode: Mode,
-                     img_verbose: bool = False
-                     ) -> float:
+    # LOGGING
+
+    def _log_metrics(self, gts: List[int], preds: List[int], probs: List[float], mode: Mode) -> float:
         gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
+        self._visualize_confusion(preds=preds, gts=gts, mode=mode)
 
         mc = Calculator(gts=gts, preds=preds, confidences=probs)
         metrics = mc.calc()
-
         for name, val in metrics.items():
             logger.info(f'{name}: {val}')
             self._writer.add_scalar(f'{mode}_{name}', val, self._i_global)
 
-        if img_verbose:
-            ii_worst, ii_best = mc.worst_errors(n_worst=8), mc.best_preds(n_best=8)
-            self._visualize_preds(ids=ii_worst, enums_pred=preds[ii_worst], mode=mode, tag='worst_mistakes')
-            self._visualize_preds(ids=ii_best, enums_pred=preds[ii_best], mode=mode, tag='best_predicts')
-            self._visualize_confusion(preds=preds, gts=gts, mode=mode)
-
         main_metric = metrics['accuracy_weighted']
         return main_metric
 
-    def _visualize_preds(self,
-                         ids: np.ndarray,
-                         enums_pred: np.ndarray,
-                         mode: Mode,
-                         tag: str
-                         ) -> None:
+    def _visualize_preds(self, ids: np.ndarray, enums_pred: np.ndarray, tag: str, draw_samples: bool) -> None:
+        # allow you visualize some predicts (image signed with gt and predicted tags)
+        # also it can show few sample images for predict and gt tags, if draw_samples is True
+
         if len(ids) == 0:
             return
 
-        if mode == Mode.TRAIN:
-            dataset = self._train_set
-        elif mode == Mode.TEST:
-            dataset = self._test_set
-        else:
-            raise ValueError(f'Unexpected mode {mode}.')
+        assert len(ids) == len(enums_pred)
 
-        assert max(ids) < len(dataset)
-
+        dataset = self._test_set
         dataset.set_default_transforms()
 
         base_color, gt_color, err_color = (0, 0, 0), (0, 255, 0), (255, 0, 0)
         n_gt_samples, n_pred_samples = 2, 2
 
-        layer_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
+        layout_tensor = torch.zeros([0, 3, SIZE[0], SIZE[1]], dtype=torch.uint8)
         for (idx, enum_pred) in zip(ids, enums_pred):
             _, enum_gt = dataset[idx]
             name_gt = beutify_name(self._name_to_enum.inv[enum_gt])
             name_pred = beutify_name(self._name_to_enum.inv[enum_pred])
 
-            main_img = dataset.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
-                                                idx=idx, color=base_color)
+            anchor_im = dataset.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
+                                                 idx=idx, color=base_color)
 
-            gt_imgs = dataset.draw_class_samples(
-                n_samples=n_gt_samples, class_num=enum_gt, color=gt_color, text=[name_gt])
+            if draw_samples:
+                pred_color = gt_color if enum_gt == enum_pred else err_color
+                gt_imgs = dataset.draw_class_samples(n_samples=n_gt_samples, class_num=enum_gt,
+                                                     color=gt_color, text=[name_gt])
+                pred_imgs = dataset.draw_class_samples(n_samples=n_pred_samples, class_num=enum_pred,
+                                                       color=pred_color, text=[name_pred])
 
-            pred_color = gt_color if enum_gt == enum_pred else err_color
-            pred_imgs = dataset.draw_class_samples(
-                n_samples=n_pred_samples, class_num=enum_pred,
-                color=pred_color, text=[name_pred])
+                layout_tensor = torch.cat([
+                    layout_tensor, anchor_im.unsqueeze(dim=0), gt_imgs, pred_imgs
+                ], dim=0)
 
-            layer_tensor = torch.cat(
-                [layer_tensor, main_img.unsqueeze(dim=0), gt_imgs, pred_imgs], dim=0)
+            else:
+                layout_tensor = torch.cat([layout_tensor, anchor_im.unsqueeze(dim=0)], dim=0)
 
-        grid = vutils.make_grid(tensor=layer_tensor, nrow=n_gt_samples + n_pred_samples + 1,
-                                normalize=False, scale_each=False)
-
-        self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=f'{mode}/{tag}')
+        n_row = n_gt_samples + n_pred_samples + 1 if draw_samples else 4
+        grid = vutils.make_grid(tensor=layout_tensor, nrow=n_row, normalize=False, scale_each=False)
+        self._writer.add_image(img_tensor=grid, global_step=self._i_global, tag=tag)
 
     def _visualize_confusion(self, preds: np.ndarray, gts: np.ndarray, mode: Mode) -> None:
         class_names = [self._name_to_enum.inv[num] for num in range(0, len(self._name_to_enum))]
