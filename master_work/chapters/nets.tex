@@ -219,9 +219,9 @@ $\delta_i$ -- символ Кронекера.
 
 
 \begin{equation}\label{eq: grad_idea}
-    w_{i, j} \leftarrow w_{i, j} - \Delta w_{i,j} = - v \frac{\partial L}{\partial w_{i, j}}
+    w_{i, j} \leftarrow w_{i, j} - \Delta w_{i,j} = - lr \frac{\partial L}{\partial w_{i, j}}
 \end{equation}
-где $v \in (0; 1)$ -- параметр, отвечающий за скорость обучения \textit{(learning rate)}.
+где $lr$ -- параметр, отвечающий за скорость обучения \textit{(learning rate)}.
 
 Для начала положим, что $j$ является 
 нейроном последнего слоя. Обозначим $S_{j} = \sum_{i} w_{i, j} x_{i}$ и

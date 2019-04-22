@@ -11,6 +11,7 @@ from tensorboardX import SummaryWriter
 from torch import nn, optim
 from torch.nn.functional import softmax
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 from torchvision import utils as vutils
 from tqdm import tqdm
@@ -176,14 +177,29 @@ class Trainer:
         self._visualize_preds(ii_best, preds[ii_best], tag='test/best_predicts', draw_samples=False)
         return main_metric
 
-    def train(self, n_max_epoch: int, test_freq: int, n_tta: int, stopper: Stopper, ckpt_dir: Path) -> float:
-
+    def train(self,
+              n_max_epoch: int,
+              test_freq: int,
+              n_tta: int,
+              stopper: Stopper,
+              use_cosine_lr: bool,
+              ckpt_dir: Path
+              ) -> float:
         self._visualize_hist()
+
+        scheduler = CosineAnnealingLR(self._optimizer, T_max=3, eta_min=1e-3)
 
         best_ckpt_path = ckpt_dir / 'best.pth.tar'
         acc_max: float = 0
         best_epoch: int = 0
+
         for i in range(n_max_epoch):
+
+            if use_cosine_lr:
+                scheduler.step()
+                lr = scheduler.get_lr()[0]
+                self._writer.add_scalar(scalar_value=lr, global_step=self._i_global, tag='lr')
+
             # train
             logger.info(f'\n\nTrain. Epoch {i} from {n_max_epoch}')
             self.train_epoch()

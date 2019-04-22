@@ -36,7 +36,7 @@ def main(args: Namespace) -> float:
     logger.info(f'Number of classes: {n_classes}.')
 
     classifier = Classifier(args.arch, n_classes, args.pretrained)
-    stopper = Stopper(n_obs=args.n_stopper_obs, delta=args.n_stopper_delta)
+    stopper = Stopper(n_obs=args.n_stopper_obs, delta=args.stopper_delta)
 
     trainer = Trainer(classifier=classifier, board_dir=board_dir,
                       train_set=train_set, test_set=test_set,
@@ -46,7 +46,8 @@ def main(args: Namespace) -> float:
                       optimizer=args.optimizer)
 
     max_metric = trainer.train(n_max_epoch=args.n_max_epoch, test_freq=args.test_freq,
-                               n_tta=args.n_tta, stopper=stopper, ckpt_dir=ckpt_dir)
+                               n_tta=args.n_tta, stopper=stopper, use_cosine_lr=args.use_cosine_lr,
+                               ckpt_dir=ckpt_dir)
 
     logger.info(f'Elapsed time: {round((time.time() - start)/60, 3)} min.')
     return max_metric
@@ -75,14 +76,15 @@ def get_parser() -> ArgumentParser:
 
     parser.add_argument('--arch', dest='arch', type=str, default='resnet34')
     parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
-    parser.add_argument('--optimizer', dest='optimizer', type=str, default='SGD')
+    parser.add_argument('--optimizer', dest='optimizer', type=str, default='Adam')
     parser.add_argument('--init_lr', dest='init_lr', type=float, default=1e-2)
+    parser.add_argument('--use_cosine_lr', dest='use_cosine_lr', type=bool, default=False)
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=50)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=48)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=190)
     parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)
     parser.add_argument('--n_workers', dest='n_workers', type=int, default=4)
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:2')
     parser.add_argument('--random_seed', dest='seed', type=int, default=42)
     parser.add_argument('--aug_degree', dest='aug_degree', type=float, default=1,
                         help='0 - turn off augmentations,'
@@ -91,9 +93,8 @@ def get_parser() -> ArgumentParser:
 
     parser.add_argument('--n_stopper_obs', dest='n_stopper_obs', type=int, default=15,
                         help='Number of epochs without metrics improving before stop.')
-    parser.add_argument('--n_stopper_delta', dest='n_stopper_delta', type=float,
-                        default=0.005, help='We assume that the metric improved only'
-                                            'if it increased by a delta.')
+    parser.add_argument('--stopper_delta', dest='stopper_delta', type=float, default=0.005,
+                        help='We assume that the metric improved only if it increased by a delta.')
     return parser
 
 
