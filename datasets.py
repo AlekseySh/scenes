@@ -18,7 +18,7 @@ resource.setrlimit(resource.RLIMIT_NOFILE, (10000, rlimit[1]))
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)
-SIZE = (256, 256)  # 299 for inception, 224 others
+SIZE = (512, 512)  # 299 for inception, 224 others
 
 logger = logging.getLogger(__name__)
 

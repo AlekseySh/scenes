@@ -187,7 +187,9 @@ class Trainer:
               ) -> float:
         self._visualize_hist()
 
-        scheduler = CosineAnnealingLR(self._optimizer, T_max=3, eta_min=1e-3)
+        scheduler = CosineAnnealingLR(self._optimizer, T_max=50, eta_min=1e-3)
+        print('*' * 50)  # todo
+        print('T max = 50')
 
         best_ckpt_path = ckpt_dir / 'best.pth.tar'
         acc_max: float = 0
