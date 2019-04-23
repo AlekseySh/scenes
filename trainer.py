@@ -172,9 +172,9 @@ class Trainer:
 
         gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
         mc = Calculator(gts=gts, preds=preds, confidences=probs)
-        ii_worst, ii_best = mc.worst_errors(n_worst=16), mc.best_preds(n_best=16)
-        self._visualize_preds(ii_worst, preds[ii_worst], tag='test/worst_mistakes', draw_samples=False)
-        self._visualize_preds(ii_best, preds[ii_best], tag='test/best_predicts', draw_samples=False)
+        ii_worst, ii_best = mc.worst_errors(n_worst=2), mc.best_preds(n_best=2)
+        self._visualize_preds(ii_best, preds[ii_best], tag='predicts/correct', draw_samples=False)
+        self._visualize_preds(ii_worst, preds[ii_worst], tag='predicts/errors', draw_samples=False)
         return main_metric
 
     def train(self,
@@ -187,9 +187,7 @@ class Trainer:
               ) -> float:
         self._visualize_hist()
 
-        scheduler = CosineAnnealingLR(self._optimizer, T_max=50, eta_min=1e-3)
-        print('*' * 50)  # todo
-        print('T max = 50')
+        scheduler = CosineAnnealingLR(self._optimizer, T_max=n_max_epoch, eta_min=1e-3)
 
         best_ckpt_path = ckpt_dir / 'best.pth.tar'
         acc_max: float = 0
@@ -256,6 +254,7 @@ class Trainer:
         # also it can show few sample images for predict and gt tags, if draw_samples is True
 
         if len(ids) == 0:
+            logger.info(f'Samples for {tag} not found.')
             return
 
         assert len(ids) == len(enums_pred)
@@ -272,13 +271,15 @@ class Trainer:
             name_gt = beutify_name(self._name_to_enum.inv[enum_gt])
             name_pred = beutify_name(self._name_to_enum.inv[enum_pred])
 
-            anchor_im = dataset.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
-                                                 idx=idx, color=base_color)
-
             if draw_samples:
                 pred_color = gt_color if enum_gt == enum_pred else err_color
+
+                anchor_im = dataset.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
+                                                     idx=idx, color=base_color)
+
                 gt_imgs = dataset.draw_class_samples(n_samples=n_gt_samples, class_num=enum_gt,
                                                      color=gt_color, text=[name_gt])
+
                 pred_imgs = dataset.draw_class_samples(n_samples=n_pred_samples, class_num=enum_pred,
                                                        color=pred_color, text=[name_pred])
 
@@ -287,6 +288,8 @@ class Trainer:
                 ], dim=0)
 
             else:
+                anchor_im = dataset.get_signed_image(text=[f'pred: {name_pred}', f'gt: {name_gt}'],
+                                                     idx=idx, color=gt_color)
                 layout_tensor = torch.cat([layout_tensor, anchor_im.unsqueeze(dim=0)], dim=0)
 
         n_row = n_gt_samples + n_pred_samples + 1 if draw_samples else 4

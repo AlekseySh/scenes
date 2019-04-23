@@ -85,19 +85,20 @@ class Stopper:
 
 def put_text_to_image(image: np.ndarray,
                       strings: List[str],
-                      str_height: int = 25,
                       color: Tuple[int, int, int] = (0, 0, 0),
                       ) -> np.ndarray:
     image = image.astype(np.uint8)
+    im_sz = np.mean(image.shape[0:2])
+    font, thick, str_height = (1, 2, 25) if im_sz < 150 else (2, 4, 60)
     for i, string in enumerate(strings):
-        image = cv2.putText(img=image,
-                            org=(5, (i + 1) * str_height),
-                            text=string,
-                            fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                            fontScale=1,
-                            thickness=2,
-                            color=color
-                            )
+        args = {'org': (5, (i + 1) * str_height),
+                'text': string,
+                'fontFace': cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                'fontScale': font
+                }
+        # draw text with black border for easy reading
+        image = cv2.putText(img=image, thickness=3 * thick, color=(0, 0, 0), **args)
+        image = cv2.putText(img=image, thickness=thick, color=color, **args)
     return image
 
 
@@ -139,11 +140,11 @@ def confusion_matrix_as_img(gts: np.ndarray,
 
     for i in range(conf_mat.shape[0]):
         for j in range(conf_mat.shape[1]):
-            ax.text(j, i,
-                    format(conf_mat[i, j], '.2f'),
+            txt = '0' if conf_mat[i, j] == 0 else format(conf_mat[i, j], '.2f')
+            ax.text(x=j, y=i, s=txt,
                     ha="center", va="center",
                     color="white" if conf_mat[i, j] > conf_mat.max() / 2. else "black",
-                    size=font
+                    size=int(0.6 * font)
                     )
 
     fig.tight_layout()

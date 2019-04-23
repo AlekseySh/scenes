@@ -18,7 +18,7 @@ resource.setrlimit(resource.RLIMIT_NOFILE, (10000, rlimit[1]))
 
 STD = (0.229, 0.224, 0.225)
 MEAN = (0.485, 0.456, 0.406)
-SIZE = (512, 512)  # 299 for inception, 224 others
+SIZE = (256, 256)  # 299 for inception, 224 others
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,6 @@ class ImagesDataset(Dataset):
 
         logger.info(f'Dataset created with size {len(self)}')
         logger.info(f'Using image size: {SIZE}')
-        assert str(SIZE[0]) in str(data_root)  # todo remove it
 
     def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
         assert self._transforms is not None

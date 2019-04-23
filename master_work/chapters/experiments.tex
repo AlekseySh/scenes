@@ -148,7 +148,7 @@ $256 \times 256$ пикселей и не будем использовать а
 по названному выше критерию.
 
 
-\begin{table}[h]
+\begin{table}[h!]
     \begin{center}
         \begin{tabular}{c | c| c | c | c}
             \hline
@@ -346,31 +346,44 @@ $p = 0.4 + 0.1k$.
 больше времени; кроме того, мы так же будем
 проводить эксперименты с уменьшенной
 скоростью обучения, что тоже требует дополнительного времени.
+Кроме того, уменьшим максимальное количество эпох для экспериментов
+с разрешением $512 \times 512$ с 50-ти до 30-ти, так одна эпоха 
+для изображений такого размера занимает слишком много времени.
 Полученные результаты приведены в таблице \ref{tabular: train_tricks}.
 
 
-\begin{table}[h]
+\begin{table}[h!]
     \begin{center}
         \begin{tabular}{c | c| c | c | c| c| c}
             \hline
-            № & Оптимизатор & Сила & Разрешение & Точность & Взвешенная  & Время \\
-            & & аугментаций & & & точность & [мин] \\
+            № & Оптимизатор & Степень & Разрешение & Точность & Взвешенная  & Время \\
+            & & аугментаций ($k$) & & & точность & [мин] \\
             \hline
     
            1 & Adam lr: 0.01 & 1 & $256 \times 256$ & 0.756 & 0.682 & 232 \\
            
-           2 & SGD, lr: 0.01 & 1 & $256 \times 256 $ & 0.800 & 0.739 & 320 \\
+           2 & SGD, lr: 0.01 & 1 & $256 \times 256$ & 0.800 & 0.739 & 320 \\
            
-           3 & SGD, lr: 0.1 & 1 & $256 \times 256 $ & 0.802 & 0.739 & 412 \\
+           3 & SGD, lr: 0.1 & 1 & $256 \times 256$ & 0.802 & 0.739 & 412 \\
            
-           4 & SGD, lr: 0.01 & 3 & $256 \times 256 $ & 0.815 & 0.747 & 302 \\
+           4 & SGD, lr: 0.01 & 3 & $256 \times 256$ & 0.815 & 0.747 & 302 \\
            
-           5 & SGD, lr: 0.01 & 1 & $512 \times 512 $ & 0.810 & 0.7811 & 1163 \\
-               
-           6 & SGD, lr: 0.01 & 5 & $256 \times 256$ & 0.771 & 0.695 & 369 \\
+           5 & SGD, lr: 0.01 & 5 & $256 \times 256$ & 0.771 & 0.695 & 369 \\
            
-           7 & SGD, annealing & 1 & $256 \times 256$ & 0.8113 & 0.752 & 275 \\
+           6 & SGD, annealing & 1 & $256 \times 256$ & 0.8113 & 0.752 & 275 \\
             &  $T=3, lr_{max} = 0.1$ & & & & \\
+            
+           7 & Adam lr: 0.001 & 2 & $256 \times 256$ & 0.745 & 0.688 & 266 \\
+            
+           8 & SGD, lr: 0.01 & 1 & $512 \times 512$ & 0.810 & 0.7811 & 698 \\
+           
+           9 & SGD, annealing & 2 & $512 \times 512$ & 0.830 & 0.766 & 867 \\
+            &  $T=3, lr_{max} = 0.1$ & & & & \\
+           
+           10 & SGD, annealing & 2 & $512 \times 512$ & 0.818 & 0.762 & 889 \\
+            &  $T=50, lr_{max} = 0.1$ & & & & \\
+           
+           11 & SGD, lr: 0.01 & 2 & $512 \times 512$ & 0.820 & 0.764 & 813 \\
            
             \hline
         \end{tabular}
@@ -398,11 +411,30 @@ $p = 0.4 + 0.1k$.
 
 \begin{figure}[h!]
     \begin{center}
-   	    \includegraphics[width=0.95\linewidth]{conf_mat}
+   	    \includegraphics[width=0.9\linewidth]{conf_mat}
    	\end{center}
    	\caption{Матрица ошибок (\textit{confusion matrix}). Истинные метки 
    	               классов отложены по горизонтали, предсказанные -- по вертикали.}
    	\label{tikzpicture: conf_mat}
+\end{figure}
+
+
+
+\begin{figure}[h!]
+    \begin{center}
+   	    \includegraphics[width=0.9\linewidth]{err_predict}
+   	\end{center}
+   	\caption{-}
+   	\label{tikzpicture: err_predict}
+\end{figure}
+
+
+\begin{figure}[h!]
+    \begin{center}
+   	    \includegraphics[width=0.9\linewidth]{correct_predict}
+   	\end{center}
+   	\caption{-}
+   	\label{tikzpicture: err_predict}
 \end{figure}
 
 
@@ -413,5 +445,3 @@ todo
 
 
 
-\subsection{Обсуждение результатов}
-todo
