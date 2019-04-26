@@ -65,12 +65,13 @@ class ImagesDataset(Dataset):
 
         with PIL.Image.open(abs_path) as im:
             pil_image = im.convert('RGB')
-            assert pil_image.size == SIZE, \
-                'Assumed, that stored images already resized.'
         return pil_image
 
     def set_default_transforms(self) -> None:
         self._transforms = _get_default_transf()
+
+    def set_defaukt_transforms_with_resize(self, size: Tuple[int, int]) -> None:
+        self._transforms = _get_default_with_resize(size)
 
     def set_train_transforms(self, aug_degree: float) -> None:
         self._transforms = _get_train_transf(aug_degree)
@@ -110,6 +111,11 @@ class ImagesDataset(Dataset):
 
 def _get_default_transf() -> t.Compose:
     transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
+    return transforms
+
+
+def _get_default_with_resize(size: Tuple[int, int]) -> t.Compose:
+    transforms = t.Compose([t.Resize(size=size), _get_default_transf()])
     return transforms
 
 
