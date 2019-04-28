@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from operator import itemgetter
 from pathlib import Path
 from typing import List, Tuple
 
@@ -48,7 +49,7 @@ def sign_and_save(im_paths: List[Path],
                   ) -> None:
     for im_path, name, prob in tqdm(zip(im_paths, names, probs), total=len(probs)):
         image = np.array(PIL.Image.open(im_path).convert('RGB'))
-        image_signed = put_text_to_image(image=image, strings=[name])
+        image_signed = put_text_to_image(image=image, strings=[name], color=(0, 255, 0))
         image_signed = PIL.Image.fromarray(image_signed).convert('RGB')
         image_signed.save(save_dir / f'{round(prob, 3)}_{im_path.name}')
 
@@ -63,6 +64,14 @@ def main(args: Namespace) -> None:
     name_to_enum = get_name_to_enum(DataMode.TAGS)
     names = [name_to_enum.inv[label] for label, prob in zip(labels, probs)]
 
+    if args.drop_other:
+        ii_not_other = [i for i, name in enumerate(names) if name != 'other']
+        n_drop = len(probs) - len(ii_not_other)
+        print(f'{n_drop} other-predicts will be dropped.')
+        names = itemgetter(*ii_not_other)(names)
+        im_paths = itemgetter(*ii_not_other)(im_paths)
+        probs = itemgetter(*ii_not_other)(probs)
+
     sign_and_save(im_paths=im_paths, names=names, probs=probs, save_dir=args.save_dir)
 
 
@@ -74,9 +83,10 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--im_dir', dest='im_dir', type=Path)
     parser.add_argument('--save_dir', dest='save_dir', type=Path)
     parser.add_argument('--ckpt_path', dest='ckpt_path', type=Path)
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=160)
     parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
     parser.add_argument('--size', dest='size', type=int, default=512)
+    parser.add_argument('--drop_other', dest='drop_other', type=int, default=True)
     return parser
 
 

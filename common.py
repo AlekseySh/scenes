@@ -89,7 +89,7 @@ def put_text_to_image(image: np.ndarray,
                       ) -> np.ndarray:
     image = image.astype(np.uint8)
     im_sz = np.mean(image.shape[0:2])
-    font, thick, str_height = (1, 2, 25) if im_sz < 150 else (2, 4, 60)
+    font, thick, str_height = (1, 2, 25) if im_sz < 150 else (6, 6, 100)
     for i, string in enumerate(strings):
         args = {'org': (5, (i + 1) * str_height),
                 'text': string,
