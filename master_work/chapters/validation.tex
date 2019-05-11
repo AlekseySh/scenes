@@ -1,5 +1,6 @@
 \section{Валидация результатов}
 
+
 \indent
 \indent
 Эта глава посвящена процедуре валидации предлагаемых 
@@ -7,20 +8,12 @@
 \textit{Одноклассники}\footnote{ok.ru/}.
 
 
-\begin{figure}
+рисунок \ref{tikzpicture: insta_predict}
+
+\begin{figure}[h!]
     \begin{center}
-   	    \includegraphics[width=0.9\linewidth]{insta_predict}
+   	    \includegraphics[width=0.7\linewidth]{insta_predict}
    	\end{center}
-   	\caption{Примеры, для которых предсказанные
-   	 \textit{(predicted)} и истинные \textit{(ground truth)} классы совпадают.}
-   	\label{tikzpicture: correct_predict}
+   	\caption{Примеры предсказаний для изображений из сети \textit{Instagram}.}
+   	\label{tikzpicture: insta_predict}
 \end{figure}
-
-
-
-todo
-1. скачиваю изображения из insta
-2. предсказываю для них тег моделью
-3. отдаю пользователям, которые либо считают предсказанный 
-тег подходящим, либо нет.
-4. привожу долю тегов, которые пользователи посчитали подходящими.
