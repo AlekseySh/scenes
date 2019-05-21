@@ -88,8 +88,8 @@
 20\% для их тестирования. В качестве метрик будем использовать 
 классические для задачи классификации точность
  (\textit{accuracy}, не путать с \textit{precision}) и взвешенную (или
- сбалансированную по размерам классов) точность:
-выражения \ref{eq:accuracy} и \ref{eq:w_accuracy}.
+ сбалансированную по размерам классов) точность. Соответствующие 
+формулы для расчёта задаются в (\ref{eq:accuracy}) и (\ref{eq:w_accuracy}).
 
 
 \begin{equation}\label{eq:accuracy}
@@ -209,7 +209,7 @@ $256 \times 256$ пикселей и не будем использовать а
 \textit{Stochastic gradient descent with Warm Restarts}~\cite{cosine},
 хотя его основная идея возникла ещё в 1983 году в публикации
 \textit{Optimization by simulated annealing}~\cite{annealing}. В соответствии со
-статьёй, скорость обучения изменяется по формуле \ref{eq:cosine}.
+статьёй, скорость обучения изменяется по (\ref{eq:cosine}).
 
 \begin{equation}\label{eq:cosine}
     lr_i = lr_{min} + \frac{1}{2} (lr_{max} - lr_{min}) (1 + \cos(\frac{i}{T} \pi ))
