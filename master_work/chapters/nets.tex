@@ -319,7 +319,7 @@ $2 w_{j, k} y_j (1 - y_j)$, а $\frac{\partial L}{\partial S_k}$ -- это по�
 \begin{equation}\label{eq: conv}
     \begin{gathered}
         G = F \otimes h \\
-	    G_{i, j} = \sum_{a=-n}^{n} \sum_{b=-n}^{n} h_{a, b} F_{s*i - n, s*j - n} \qquad
+	    G_{i, j} = \sum_{a=-n}^{n} \sum_{b=-n}^{n} h_{a, b} F_{s*i - a, s*j - b} \qquad
 	    \forall i \in (1..I), \forall j \in (1..J) \\
     \end{gathered}
 \end{equation}
@@ -379,7 +379,7 @@ $G$ --- матрица размером $I \times J$, результат све�
 
 \begin{itemize}
 
-    \item Residual netwrotk (ResNet) ---
+    \item Residual network (ResNet) ---
     одна из самых популярных в настоящее время архитектур,
     предложенная в статье от \textit{Microsoft} \cite{resnet}.
     Основная идея состоит в добавлении конкатенации выходов
