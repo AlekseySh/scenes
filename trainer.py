@@ -44,6 +44,7 @@ class Trainer:
     _criterion: nn.Module
     _optimizer: Optimizer
     _writer: SummaryWriter
+    _visualize: bool
 
     def __init__(self,
                  classifier: Classifier,
@@ -56,7 +57,8 @@ class Trainer:
                  n_workers: int,
                  aug_degree: float,
                  optimizer: str,
-                 init_lr: float
+                 init_lr: float,
+                 visualize: bool
                  ):
 
         self._classifier = classifier
@@ -81,6 +83,7 @@ class Trainer:
         self._i_global = 0
         self._classifier.to(self._device)
         self._writer = SummaryWriter(str(self._board_dir))
+        self._visualize = visualize
 
     def train_epoch(self) -> float:
         self._classifier.train()
@@ -173,8 +176,9 @@ class Trainer:
         gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
         mc = Calculator(gts=gts, preds=preds, confidences=probs)
         ii_worst, ii_best = mc.worst_errors(n_worst=2), mc.best_preds(n_best=2)
-        self._visualize_preds(ii_best, preds[ii_best], tag='predicts/correct', draw_samples=False)
-        self._visualize_preds(ii_worst, preds[ii_worst], tag='predicts/errors', draw_samples=False)
+        if self._visualize:
+            self._visualize_preds(ii_best, preds[ii_best], tag='predicts/correct', draw_samples=False)
+            self._visualize_preds(ii_worst, preds[ii_worst], tag='predicts/errors', draw_samples=False)
         return main_metric
 
     def train(self,
@@ -185,7 +189,8 @@ class Trainer:
               use_cosine_lr: bool,
               ckpt_dir: Path
               ) -> float:
-        self._visualize_hist()
+        if self._visualize:
+            self._visualize_hist()
 
         scheduler = CosineAnnealingLR(self._optimizer, T_max=n_max_epoch, eta_min=1e-3)
 
@@ -238,7 +243,8 @@ class Trainer:
 
     def _log_metrics(self, gts: List[int], preds: List[int], probs: List[float], mode: Mode) -> float:
         gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
-        self._visualize_confusion(preds=preds, gts=gts, mode=mode)
+        if self._visualize:
+            self._visualize_confusion(preds=preds, gts=gts, mode=mode)
 
         mc = Calculator(gts=gts, preds=preds, confidences=probs)
         metrics = mc.calc()
