@@ -3,6 +3,7 @@ from pathlib import Path
 from random import shuffle
 from typing import List, Tuple, Dict, Union
 
+import numpy as np
 import pandas as pd
 from bidict import bidict
 
@@ -140,6 +141,55 @@ def get_sun_to_tags_mapping() -> Dict[str, str]:
     return sun_to_tag
 
 
+class Hierarchy:
+    n_levels: int
+    _hier_mappings: Dict[int, Dict[str, np.ndarray]]
+
+    def __init__(self, hier_mapping_files: List[Path]):
+        self._hier_mappings = {}
+        for i_level, file in enumerate(hier_mapping_files):
+            self._hier_mappings[i_level + 1] = Hierarchy.parse_mapping_file(file)
+
+        # additional mapping for classes from bot level
+        classes_to_one_hot = {}
+        bot_classes = get_sun_names()
+        n_bot = len(bot_classes)
+        for i, cls in enumerate(sorted(bot_classes)):  # todo
+            classes_to_one_hot[cls] = Hierarchy.code_one_hot(n_bot, i)
+
+        i_level_bot = len(hier_mapping_files) + 1
+        self._hier_mappings[i_level_bot] = classes_to_one_hot
+
+    def get_one_hot(self, i_level: int, class_name: str) -> np.ndarray:
+        return self._hier_mappings[i_level][class_name]
+
+    @staticmethod
+    def parse_mapping_file(file_path: Path) -> Dict[str, np.ndarray]:
+        df = pd.read_csv(file_path, index_col=None)
+        classes = list(df['category'].values)  # bot classes
+
+        df = df.drop(columns=['category'])
+        class_to_onehot = {cls: row for cls, row in
+                           zip(classes, df.values.astype(np.bool))}
+
+        return class_to_onehot
+
+    @staticmethod
+    def code_one_hot(n_classes: int, i_hot: int) -> np.ndarray:
+        one_hot = np.zeros(n_classes, dtype=np.bool)
+        one_hot[i_hot] = True
+        return one_hot
+
+
+def get_hierarchy() -> Hierarchy:
+    hier_dir = FILES_DIR / 'hierarchy'
+    hierarchy = Hierarchy(hier_mapping_files=[
+        hier_dir / 'level1.csv',
+        hier_dir / 'level2.csv'
+    ])
+    return hierarchy
+
+
 # RANDOM
 
 def beutify_name(sun_name: Union[Path, str]) -> str:
@@ -154,3 +204,8 @@ def beutify_name(sun_name: Union[Path, str]) -> str:
     if str(beutified_name) in sun_special_words:
         beutified_name = sun_name.parent.name
     return str(beutified_name)
+
+
+if __name__ == '__main__':
+    h = get_hierarchy()
+    print(h.get_one_hot(class_name='/a/abbey', i_level=3))
