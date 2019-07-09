@@ -56,28 +56,19 @@ class ImagesDataset(Dataset):
         return len(self._im_paths)
 
     def _read_pil(self, idx: int) -> TImage:
-        local_path = self._im_paths[idx]
-
-        if str(local_path).startswith('/'):
-            local_path = Path(str(local_path)[1:])
-
-        abs_path = self._data_root / local_path
-
-        with PIL.Image.open(abs_path) as im:
-            pil_image = im.convert('RGB')
-        return pil_image
+        return read_pil(self._data_root, self._im_paths[idx])
 
     def set_default_transforms(self) -> None:
-        self._transforms = _get_default_transf()
+        self._transforms = get_default_transf()
 
     def set_defaukt_transforms_with_resize(self, size: Tuple[int, int]) -> None:
-        self._transforms = _get_default_with_resize(size)
+        self._transforms = get_default_with_resize(size)
 
     def set_train_transforms(self, aug_degree: float) -> None:
-        self._transforms = _get_train_transf(aug_degree)
+        self._transforms = get_train_transf(aug_degree)
 
     def set_test_transforms(self, n_augs: int, aug_degree: float) -> None:
-        self._transforms = _get_test_transf(n_augs, aug_degree)
+        self._transforms = get_test_transf(n_augs, aug_degree)
 
     @property
     def labels_enum(self) -> List[int]:
@@ -109,19 +100,30 @@ class ImagesDataset(Dataset):
         return layout
 
 
-def _get_default_transf() -> t.Compose:
+def read_pil(data_root: Path, local_path: Path) -> TImage:
+    if str(local_path).startswith('/'):
+        local_path = Path(str(local_path)[1:])
+
+    abs_path = data_root / local_path
+
+    with PIL.Image.open(abs_path) as im:
+        pil_image = im.convert('RGB')
+    return pil_image
+
+
+def get_default_transf() -> t.Compose:
     transforms = t.Compose([t.ToTensor(), t.Normalize(mean=MEAN, std=STD)])
     return transforms
 
 
-def _get_default_with_resize(size: Tuple[int, int]) -> t.Compose:
-    transforms = t.Compose([t.Resize(size=size), _get_default_transf()])
+def get_default_with_resize(size: Tuple[int, int]) -> t.Compose:
+    transforms = t.Compose([t.Resize(size=size), get_default_transf()])
     return transforms
 
 
-def _get_train_transf(aug_degree: float) -> t.Compose:
+def get_train_transf(aug_degree: float) -> t.Compose:
     transforms = t.Compose([
-        _get_rand_transf(aug_degree),
+        get_rand_transf(aug_degree),
         t.Resize(size=SIZE),
         t.ToTensor(),
         t.Normalize(mean=MEAN, std=STD)]
@@ -129,17 +131,17 @@ def _get_train_transf(aug_degree: float) -> t.Compose:
     return transforms
 
 
-def _get_test_transf(n_tta: int, aug_degree: float) -> t.Compose:
+def get_test_transf(n_tta: int, aug_degree: float) -> t.Compose:
     # Test Time Augmentation (TTA) aproach
     transforms = t.Compose([
-        t.Lambda(lambda image: [_get_rand_transf(aug_degree)(image) for _ in range(n_tta)]),
+        t.Lambda(lambda image: [get_rand_transf(aug_degree)(image) for _ in range(n_tta)]),
         t.Lambda(lambda images: [t.Resize(size=SIZE)(image) for image in images]),
-        t.Lambda(lambda images: [_get_default_transf()(image) for image in images])
+        t.Lambda(lambda images: [get_default_transf()(image) for image in images])
     ])
     return transforms
 
 
-def _get_rand_transf(k: float) -> t.RandomOrder:
+def get_rand_transf(k: float) -> t.RandomOrder:
     assert k > 0
 
     crop_k = 1 - k * 0.1

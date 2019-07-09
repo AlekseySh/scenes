@@ -8,7 +8,7 @@ from typing import Tuple
 import torch
 
 from common import beutify_args, Stopper, fix_seed
-from datasets import ImagesDataset
+from dataset import ImagesDataset
 from network import Classifier
 from sun_data.utils import DataMode, load_data
 from trainer import Trainer

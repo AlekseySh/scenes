@@ -17,7 +17,7 @@ from torchvision import utils as vutils
 from tqdm import tqdm
 
 from common import OnlineAvg, Stopper, confusion_matrix_as_img, histogram_as_img
-from datasets import ImagesDataset, SIZE
+from dataset import ImagesDataset, SIZE
 from metrics import Calculator
 from network import Classifier, Arch
 from sun_data.utils import beutify_name
