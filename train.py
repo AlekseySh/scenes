@@ -85,7 +85,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
     parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)
     parser.add_argument('--n_workers', dest='n_workers', type=int, default=4)
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:2')
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
     parser.add_argument('--random_seed', dest='seed', type=int, default=42)
     parser.add_argument('--aug_degree', dest='aug_degree', type=float, default=2,
                         help='0 - turn off augmentations,'
