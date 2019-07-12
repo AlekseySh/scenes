@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
+import torch
 import torchvision.transforms as t
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -15,11 +15,9 @@ class Hierarchy:
     n_levels: int
 
     _hier_sizes: Dict[int, int]
-    _hier_mappings: Dict[int, Dict[str, np.ndarray]]
+    _hier_mappings: Dict[int, Dict[str, Tensor]]
 
     def __init__(self, hier_mapping_files: List[Path]):
-        self.n_levels = len(hier_mapping_files) + 1
-
         self._hier_sizes = {}
         self._hier_mappings = {}
 
@@ -28,14 +26,21 @@ class Hierarchy:
 
         self._set_bottom_level()
 
-    def get_one_hot(self, i_level: int, class_name: str) -> np.ndarray:
+        self.n_levels = len(hier_mapping_files) + 1
+
+    def get_one_hot(self, i_level: int, class_name: str) -> Tensor:
         return self._hier_mappings[i_level][class_name]
+
+    def get_one_hot_arr(self, levels: Tuple[int, ...], class_name: str
+                        ) -> Tuple[torch.Tensor, ...]:
+        one_hot_arr = tuple([self.get_one_hot(i, class_name) for i in levels])
+        return one_hot_arr
 
     def get_level_size(self, i_level: int) -> int:
         return self._hier_sizes[i_level]
 
-    def get_level_sizes(self) -> Tuple[int, ...]:
-        sizes = [self.get_level_size(i) for i in range(self.n_levels)]
+    def get_level_sizes(self, levels: List[int]) -> Tuple[int, ...]:
+        sizes = [self.get_level_size(l) for l in levels]
         return tuple(sizes)
 
     def _set_bottom_level(self) -> None:
@@ -54,15 +59,15 @@ class Hierarchy:
         classes = list(df['category'].values)  # bot classes
 
         df = df.drop(columns=['category'])
-        class_to_onehot = {cls: row for cls, row in
-                           zip(classes, df.values.astype(np.bool))}
+        class_to_onehot = {cls: torch.tensor(row) for cls, row in
+                           zip(classes, df.values)}
 
         self._hier_mappings[i_level] = class_to_onehot
         self._hier_sizes[i_level] = len(df.columns)
 
     @staticmethod
-    def code_one_hot(n_classes: int, i_hot: int) -> np.ndarray:
-        one_hot = np.zeros(n_classes, dtype=np.bool)
+    def code_one_hot(n_classes: int, i_hot: int) -> Tensor:
+        one_hot = torch.zeros(n_classes)
         one_hot[i_hot] = True
         return one_hot
 
@@ -72,30 +77,38 @@ class HierDataset(Dataset):
     _im_paths: List[Path]
     _classes_bot: List[str]
     hierarchy: Hierarchy
+    _levels: List[int]
+
     _transforms: Optional[t.Compose]
 
     def __init__(self,
                  data_root: Path,
                  im_paths: List[Path],
                  classes_bot: List[str],
-                 hierarchy_mappings: List[Path]
+                 hier_mappings: List[Path],
+                 levels: Tuple[int, ...]
                  ):
         assert len(im_paths) == len(classes_bot)
 
         self._data_root = data_root
         self._im_paths = im_paths
         self._classes_bot = classes_bot
-        self.hierarchy = Hierarchy(hierarchy_mappings)
+        self._levels = levels
+        self.hierarchy = Hierarchy(hier_mappings)
 
         self._transforms = None
 
-    def __getitem__(self, idx: int) -> Tensor:
+    def __getitem__(self, idx: int) -> Tuple[Tensor, Tuple[Tensor, ...]]:
         if self._transforms is None:
             raise ValueError('Set transforms before using.')
 
         pil_image = read_pil(self._data_root, self._im_paths[idx])
         im_tensor = self._transforms(pil_image)
-        return im_tensor
+
+        one_hot = self.hierarchy.get_one_hot_arr(
+            levels=self._levels, class_name=self._classes_bot[idx])
+
+        return im_tensor, one_hot
 
     def __len__(self) -> int:
         return len(self._im_paths)

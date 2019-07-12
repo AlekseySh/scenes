@@ -9,18 +9,21 @@ from sun_data.utils import DataMode, load_data
 from sun_data.utils import get_hierarchy_mappings
 
 
-def get_datasets(data_root: Path, data_mode: DataMode
+def get_datasets(data_root: Path, data_mode: DataMode, levels: Tuple[int, ...]
                  ) -> Tuple[HierDataset, HierDataset]:
     (train_paths, train_names), (test_paths, test_names), _ = \
         load_data(data_mode)
 
-    train_set = HierDataset(data_root=data_root, im_paths=train_paths,
-                            classes_bot=train_names,
-                            hierarchy_mappings=get_hierarchy_mappings())
+    common_args = {
+        'levels': levels,
+        'hier_mappings': get_hierarchy_mappings(),
+        'data_root': data_root
+    }
+    train_set = HierDataset(im_paths=train_paths, classes_bot=train_names,
+                            **common_args)
 
-    test_set = HierDataset(data_root=data_root, im_paths=test_paths,
-                           classes_bot=test_names,
-                           hierarchy_mappings=get_hierarchy_mappings())
+    test_set = HierDataset(im_paths=test_paths, classes_bot=test_names,
+                           **common_args)
 
     train_set.set_train_transforms()
     test_set.set_test_transforms()
@@ -30,21 +33,24 @@ def get_datasets(data_root: Path, data_mode: DataMode
 def main(args: Namespace) -> None:
     assert 'classic' in str(args.data_mode).lower()
     train_set, test_set = get_datasets(data_root=args.data_root,
-                                       data_mode=args.data_mode)
+                                       data_mode=args.data_mode,
+                                       levels=args.levels)
 
-    level_sizes = train_set.hierarchy.get_level_sizes()
+    level_sizes = train_set.hierarchy.get_level_sizes(levels=args.levels)
+
     classifier = Classifier(level_sizes)
 
     trainer = Trainer(classifier=classifier, train_set=train_set,
                       test_set=test_set)
-    trainer.train()
+    
+    trainer.train(n_epoch=5)
 
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('--data_root', dest='data_root', type=Path)
 
-    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=[0, 1, 2])
+    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([2]))
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
                         default=DataMode.CLASSIC_01, help=f'One from classic modes.')
     return parser
