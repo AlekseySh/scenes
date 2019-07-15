@@ -39,7 +39,7 @@ class Hierarchy:
     def get_level_size(self, i_level: int) -> int:
         return self._hier_sizes[i_level]
 
-    def get_level_sizes(self, levels: List[int]) -> Tuple[int, ...]:
+    def get_level_sizes(self, levels: Tuple[int, ...]) -> Tuple[int, ...]:
         sizes = [self.get_level_size(l) for l in levels]
         return tuple(sizes)
 
@@ -77,7 +77,7 @@ class HierDataset(Dataset):
     _im_paths: List[Path]
     _classes_bot: List[str]
     hierarchy: Hierarchy
-    _levels: List[int]
+    levels: Tuple[int, ...]
 
     _transforms: Optional[t.Compose]
 
@@ -93,7 +93,7 @@ class HierDataset(Dataset):
         self._data_root = data_root
         self._im_paths = im_paths
         self._classes_bot = classes_bot
-        self._levels = levels
+        self.levels = levels
         self.hierarchy = Hierarchy(hier_mappings)
 
         self._transforms = None
@@ -106,7 +106,7 @@ class HierDataset(Dataset):
         im_tensor = self._transforms(pil_image)
 
         one_hot = self.hierarchy.get_one_hot_arr(
-            levels=self._levels, class_name=self._classes_bot[idx])
+            levels=self.levels, class_name=self._classes_bot[idx])
 
         return im_tensor, one_hot
 

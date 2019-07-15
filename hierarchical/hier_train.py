@@ -7,6 +7,7 @@ from hierarchical.hier_network import Classifier
 from hierarchical.hier_trainer import Trainer
 from sun_data.utils import DataMode, load_data
 from sun_data.utils import get_hierarchy_mappings
+from train import setup_logging
 
 
 def get_datasets(data_root: Path, data_mode: DataMode, levels: Tuple[int, ...]
@@ -40,17 +41,19 @@ def main(args: Namespace) -> None:
 
     classifier = Classifier(level_sizes)
 
-    trainer = Trainer(classifier=classifier, train_set=train_set,
-                      test_set=test_set)
-    
+    board_dir, _ = setup_logging(log_dir=args.log_dir)
+    trainer = Trainer(classifier=classifier, board_dir=board_dir,
+                      train_set=train_set, test_set=test_set)
+
     trainer.train(n_epoch=5)
 
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('--data_root', dest='data_root', type=Path)
+    parser.add_argument('--log_dir', dest='log_dir', type=Path)
 
-    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([2]))
+    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([0, 2]))
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
                         default=DataMode.CLASSIC_01, help=f'One from classic modes.')
     return parser
