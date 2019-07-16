@@ -149,7 +149,7 @@ class Trainer:
             self._test_set.set_default_transforms()
 
         loader = DataLoader(dataset=self._test_set, batch_size=batch_size_tta,
-                            num_workers=self._num_workers, shuffle=False)
+                            num_workers=self._num_workers, shuffle=False, drop_last=False)
 
         gts: List[int] = []
         preds: List[int] = []

@@ -14,9 +14,15 @@ def calc_accuracy_batch(logits_list: Tuple[Tensor, ...],
         logits = logits.clone().cpu()
         one_hot = one_hot.clone().cpu()
 
+        assert logits.shape == one_hot.shape
+
         preds = Sigmoid()(logits) > th
         equals_mat = preds.type(torch.bool) == one_hot.type(torch.bool)
-        acc = torch.mean(equals_mat.type(torch.float32).prod(dim=1))
+        equals = equals_mat.type(torch.float32).prod(dim=1)
+
+        assert equals.shape == logits.shape[0:1], f'{equals.shape}, {logits.shape}'
+
+        acc = float(torch.mean(equals))
         acc_list.append(acc)
 
     return acc_list

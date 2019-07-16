@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as t
@@ -11,7 +12,8 @@ from dataset import read_pil, get_train_transf, get_default_transf
 from sun_data.utils import get_sun_names
 
 
-class Hierarchy:
+# Multi label task
+class HierarchyMultiLabel:
     n_levels: int
 
     _hier_sizes: Dict[int, int]
@@ -72,6 +74,64 @@ class Hierarchy:
         return one_hot
 
 
+# Single label task
+
+class Hierarchy:
+    n_levels: int
+
+    _levels_sizes: Dict[int, int]
+    _mappings: Dict[int, Dict[str, int]]
+
+    def __init__(self, mapping_files: Tuple[Path, ...]):
+        self._levels_sizes = {}
+        self._mappings = {}
+
+        for level, file in enumerate(mapping_files):
+            self._parse_mapping_file(level=level, file=file)
+
+    def _parse_mapping_file(self, level: int, file: Path) -> None:
+        df = pd.read_csv(file, index_col=None)
+        bot_classes = list(df['category'].values)
+
+        df = df.drop(columns=['category'])
+
+        class_to_enum = {}
+        for cls, row in zip(bot_classes, df.values):
+            class_to_enum[cls] = Hierarchy.one_hot_to_enum(row)
+
+        self._mappings[level] = class_to_enum
+        self._hier_sizes[level] = len(class_to_enum)
+
+    def set_bottom_level(self) -> None:
+        cls_to_enum = {}
+        bot_classes = get_sun_names()
+
+        for i, cls in enumerate(sorted(bot_classes)):
+            cls_to_enum[cls] = i
+
+        bot_level = len(self._mappings)
+        self._mappings[bot_level] = cls_to_enum
+        self._levels_sizes[bot_level] = len(bot_classes)
+
+    def get_enums(self, cls, levels: Tuple[int, ...]) -> Tuple[int, ...]:
+        enums = [self._mappings[level][cls] for level in levels]
+        return tuple(enums)
+
+    def get_levels_sizes(self) -> Tuple[int, ...]:
+        sizes = [len(self._mappings[level]) for level in range(self.n_levels)]
+        return tuple(sizes)
+
+    @staticmethod
+    def one_hot_to_enum(one_hot: np.ndarray) -> int:
+        inds_nonzero = np.nonzero(one_hot)
+
+        if len(inds_nonzero) == 1:
+            raise ValueError('Mapping file contains multilabeled sample')
+
+        enum = int(inds_nonzero[0])
+        return enum
+
+
 class HierDataset(Dataset):
     _data_root: Path
     _im_paths: List[Path]
@@ -98,22 +158,22 @@ class HierDataset(Dataset):
 
         self._transforms = None
 
-    def __getitem__(self, idx: int) -> Tuple[Tensor, Tuple[Tensor, ...]]:
+    def __getitem__(self, idx: int) -> Tuple[Tuple[int, ...], Tuple[Tensor, ...]]:
         if self._transforms is None:
             raise ValueError('Set transforms before using.')
 
         pil_image = read_pil(self._data_root, self._im_paths[idx])
         im_tensor = self._transforms(pil_image)
 
-        one_hot = self.hierarchy.get_one_hot_arr(
+        enums = self.hierarchy.get_enums(
             levels=self.levels, class_name=self._classes_bot[idx])
 
-        return im_tensor, one_hot
+        return im_tensor, enums
 
     def __len__(self) -> int:
         return len(self._im_paths)
 
-    def set_train_transforms(self, aug_degree: float = 1.0) -> None:
+    def set_train_transforms(self, aug_degree: float) -> None:
         self._transforms = get_train_transf(aug_degree)
 
     def set_test_transforms(self) -> None:
