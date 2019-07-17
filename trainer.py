@@ -174,7 +174,7 @@ class Trainer:
         main_metric = self._log_metrics(gts, preds, probs, Mode.TEST)
 
         gts, preds, probs = np.array(gts), np.array(preds), np.array(probs)
-        mc = Calculator(gts=gts, preds=preds, confidences=probs)
+        mc = Calculator(gts=gts, preds=preds, probs=probs)
         ii_worst, ii_best = mc.worst_errors(n_worst=2), mc.best_preds(n_best=2)
         if self._visualize:
             self._visualize_preds(ii_best, preds[ii_best], tag='predicts/correct', draw_samples=False)
@@ -246,7 +246,7 @@ class Trainer:
         if self._visualize:
             self._visualize_confusion(preds=preds, gts=gts, mode=mode)
 
-        mc = Calculator(gts=gts, preds=preds, confidences=probs)
+        mc = Calculator(gts=gts, preds=preds, probs=probs)
         metrics = mc.calc()
         for name, val in metrics.items():
             logger.info(f'{name}: {val}')

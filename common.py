@@ -45,7 +45,7 @@ class OnlineAvg:
         self.n += 1
         self.avg = (self.avg * (self.n - 1) + new_x) / self.n
 
-    def clear(self) -> None:
+    def refresh(self) -> None:
         self.avg = 0
         self.n = 0
 

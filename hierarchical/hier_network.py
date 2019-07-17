@@ -36,3 +36,13 @@ class Classifier(nn.Module):
 
         logits = tuple(logits_list)
         return logits
+
+    def set_train_mode(self) -> None:
+        self.train()
+        for param in self.parameters():
+            param.requires_grad = True
+
+    def set_test_mode(self) -> None:
+        self.eval()
+        for param in self.parameters():
+            param.requires_grad = False

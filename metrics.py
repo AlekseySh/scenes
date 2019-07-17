@@ -9,13 +9,13 @@ class Calculator:
     _confidences: np.ndarray
     samples_num: int
 
-    def __init__(self, gts: np.ndarray, preds: np.ndarray, confidences: np.ndarray):
+    def __init__(self, gts: np.ndarray, preds: np.ndarray, probs: np.ndarray):
         assert gts.shape == preds.shape, f'{gts.shape}, {preds.shape}'
-        assert gts.shape == confidences.shape, f'{gts.shape}, {confidences.shape}'
+        assert gts.shape == probs.shape, f'{gts.shape}, {probs.shape}'
 
         self._gts = gts
         self._preds = preds
-        self._confidences = confidences
+        self._confidences = probs
         self.samples_num = len(self._gts)
 
     def calc(self) -> Dict[str, float]:
