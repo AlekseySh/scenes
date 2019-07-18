@@ -72,7 +72,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('-d', '--data_root', dest='data_root', type=Path)
     parser.add_argument('-w', '--log_dir', dest='log_dir', type=Path)
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
-                        default=DataMode.TAGS, help=f'One mode from {DataMode}.')
+                        default=DataMode.CLASSIC_01, help=f'One mode from {DataMode}.')
 
     parser.add_argument('--visualize', dest='visualize', type=bool, default=False)
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
