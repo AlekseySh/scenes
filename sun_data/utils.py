@@ -143,7 +143,7 @@ def get_sun_to_tags_mapping() -> Dict[str, str]:
 
 def get_hierarchy_mappings() -> List[Path]:
     hier_dir = FILES_DIR / 'hierarchy'
-    return [hier_dir / 'level0.csv', hier_dir / 'level0.csv']
+    return [hier_dir / 'level0.csv', hier_dir / 'level1.csv']
 
 
 # RANDOM

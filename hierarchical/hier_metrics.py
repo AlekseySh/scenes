@@ -5,6 +5,7 @@ from torch import Tensor
 from torch.nn import Sigmoid
 
 
+# Multilabel task
 def calc_accuracy_batch(logits_list: Tuple[Tensor, ...],
                         one_hot_arr: Tuple[Tensor, ...],
                         th: float = 0.5

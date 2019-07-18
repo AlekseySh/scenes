@@ -8,15 +8,21 @@ import torch
 from tensorboardX import SummaryWriter
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import softmax
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from common import OnlineAvg
+from common import Stopper
 from hierarchical.hier_dataset import HierDataset
 from hierarchical.hier_network import Classifier
 from metrics import Calculator
 
 logger = logging.getLogger(__name__)
+
+
+def round3(x: float) -> float:
+    return round(x, 3)
 
 
 class Mode(Enum):
@@ -60,7 +66,7 @@ class Trainer:
 
         self._classifier.to(self._device)
 
-    def data_loop(self, mode: Mode) -> None:
+    def data_loop(self, mode: Mode) -> float:
         if mode == Mode.TRAIN:
             dataset, shuffle, drop_last = self._train_set, True, True
             self._classifier.set_train_mode()
@@ -103,31 +109,44 @@ class Trainer:
 
             if mode == Mode.TRAIN:
                 self._optimizer.step()
-                self._i_global += 1
+
+            self._i_global += 1
 
             acc_avg.update(np.mean(metrics))
             loss_avg.update(np.mean(losses))
 
             postf_loss = self.log_values(losses, loader.dataset.levels, tag=f'{mode.s}/loss')
             postf_metric = self.log_values(metrics, loader.dataset.levels, tag=f'{mode.s}/acc')
-            loader_tqdm.set_postfix(ordered_dict={f'{mode.s}/acc_avg': acc_avg.avg,
-                                                  f'{mode.s}/loss_avg': loss_avg.avg,
+            loader_tqdm.set_postfix(ordered_dict={f'{mode.s}/acc_avg': round3(acc_avg.avg),
+                                                  f'{mode.s}/loss_avg': round3(loss_avg.avg),
                                                   **postf_loss, **postf_metric})
 
-        logger.info(f'Average loss: {round(loss_avg.avg, 3)}')
-        logger.info(f'Average accuracy: {round(acc_avg.avg, 3)}')
+        logger.info(f'Average loss: {round3(loss_avg.avg)}')
+        logger.info(f'Average accuracy: {round3(acc_avg.avg)}')
+        return acc_avg.avg
 
     def train(self, n_epoch: int) -> None:
+        max_acc = 0
+        stopper = Stopper(n_obs=15, delta=0.005)
+        scheduler = CosineAnnealingLR(self._optimizer, T_max=n_epoch, eta_min=1e-3)
+
         for i in range(n_epoch):
             logger.info(f'\nEpoch {i + 1} / {n_epoch}:')
 
-            mode = Mode.TRAIN
-            self.data_loop(mode)
+            self.data_loop(Mode.TRAIN)
+            scheduler.step()
+            self._writer.add_scalar('lr', scheduler.get_lr()[0], self._i_global)
 
-            mode = Mode.TEST
-            self.data_loop(mode)
+            acc = self.data_loop(Mode.TEST)
+            max_acc = acc if acc > max_acc else max_acc
 
             logger.info('Epoch ended\n\n')
+
+            stopper.update(acc)
+            if stopper.check_criterion():
+                logger.info(f'Early stop by criterion. Reached {i} epoch of {n_epoch}')
+                logger.info(f'Resulted accuracy: {max_acc}')
+                break
 
     def log_values(self,
                    values: List[float],
@@ -135,8 +154,8 @@ class Trainer:
                    tag: str
                    ) -> Dict[str, float]:
         postfix = {}
-        for loss, level in zip(values, levels):
-            name, val = f'{tag}{level}', round(loss, 3)
+        for val, level in zip(values, levels):
+            name, val = f'{tag}{level}', round3(val)
             self._writer.add_scalar(name, val, self._i_global)
             postfix[name] = val
 
