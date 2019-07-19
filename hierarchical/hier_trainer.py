@@ -1,7 +1,8 @@
 import logging
+from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import Dict, DefaultDict
 
 import numpy as np
 import torch
@@ -38,9 +39,9 @@ class Trainer:
     _classifier: Classifier
     _train_set: HierDataset
     _test_set: HierDataset
+    _device: torch.device
 
     _cross_entropy: CrossEntropyLoss
-    _device: torch.device
     _optimizer: torch.optim.Optimizer
     _writer: SummaryWriter
     _i_global: int
@@ -50,18 +51,17 @@ class Trainer:
                  train_set: HierDataset,
                  test_set: HierDataset,
                  board_dir: Path,
+                 device: torch.device
                  ):
         self._classifier = classifier
         self._train_set = train_set
         self._test_set = test_set
+        self._device = device
 
         self._cross_entropy = CrossEntropyLoss()
-        self._device = torch.device('cuda:1')
         self._optimizer = torch.optim.SGD(classifier.parameters(), lr=1e-1)
 
         self._writer = SummaryWriter(log_dir=board_dir)
-        self._cur_metric = OnlineAvg()
-        self._cur_loss = OnlineAvg()
         self._i_global = 0
 
         self._classifier.to(self._device)
@@ -82,48 +82,41 @@ class Trainer:
                             batch_size=180, num_workers=4)
 
         loader_tqdm = tqdm(loader)
-        acc_avg, loss_avg = OnlineAvg(), OnlineAvg()
+        avg_values = defaultdict(lambda: OnlineAvg())
         for images, enums_arr in loader_tqdm:
+            logits_list = self._classifier(images.to(self._device))
 
             if mode == Mode.TRAIN:
                 self._optimizer.zero_grad()
 
-            logits_list = self._classifier(images.to(self._device))
-
-            losses, metrics = [], []
-            for logits, enums in zip(logits_list, enums_arr):
-
+            for logits, enums, level in zip(logits_list, enums_arr, dataset.levels):
+                # loss
                 loss = self._cross_entropy(logits, enums.to(self._device))
+                loss_tag, loss_v = f'{mode.s}/loss{level}', float(loss.detach().cpu())
+                avg_values[loss_tag].update(loss_v)
+                self._writer.add_scalar(loss_tag, loss_v, self._i_global)
 
-                loss_v = float(loss.detach().cpu())
+                # metric
                 acc = Calculator(preds=np.argmax(logits.detach().cpu().numpy(), axis=1),
                                  probs=np.argmax(softmax(logits, dim=1).detach().cpu().numpy(), axis=1),
                                  gts=enums.detach().cpu().numpy()
                                  ).calc()['accuracy_weighted']
-
-                losses.append(loss_v)
-                metrics.append(acc)
+                avg_values[f'{mode.s}/acc{level}'].update(acc)
 
                 if mode == Mode.TRAIN:
                     loss.backward(retain_graph=True)
 
             if mode == Mode.TRAIN:
                 self._optimizer.step()
+                self._i_global += 1
 
-            self._i_global += 1
+            loader_tqdm.set_postfix(self.make_postfix(avg_values, mode))
 
-            acc_avg.update(np.mean(metrics))
-            loss_avg.update(np.mean(losses))
+        avg_acc_tag = f'{mode.s}/acc'
+        avg_acc = avg_values[avg_acc_tag].avg
+        self._writer.add_scalar(avg_acc_tag, avg_acc, self._i_global)
 
-            postf_loss = self.log_values(losses, loader.dataset.levels, tag=f'{mode.s}/loss')
-            postf_metric = self.log_values(metrics, loader.dataset.levels, tag=f'{mode.s}/acc')
-            loader_tqdm.set_postfix(ordered_dict={f'{mode.s}/acc_avg': round3(acc_avg.avg),
-                                                  f'{mode.s}/loss_avg': round3(loss_avg.avg),
-                                                  **postf_loss, **postf_metric})
-
-        logger.info(f'Average loss: {round3(loss_avg.avg)}')
-        logger.info(f'Average accuracy: {round3(acc_avg.avg)}')
-        return acc_avg.avg
+        return avg_acc
 
     def train(self, n_epoch: int) -> None:
         max_acc = 0
@@ -140,27 +133,26 @@ class Trainer:
             acc = self.data_loop(Mode.TEST)
             max_acc = acc if acc > max_acc else max_acc
 
-            logger.info('Epoch ended\n\n')
-
             stopper.update(acc)
             if stopper.check_criterion():
                 logger.info(f'Early stop by criterion. Reached {i} epoch of {n_epoch}')
                 logger.info(f'Resulted accuracy: {max_acc}')
                 break
 
-    def log_values(self,
-                   values: List[float],
-                   levels: Tuple[int, ...],
-                   tag: str
-                   ) -> Dict[str, float]:
+    @staticmethod
+    def make_postfix(avg_values: DefaultDict[str, OnlineAvg], mode: Mode) -> Dict[str, float]:
         postfix = {}
-        for val, level in zip(values, levels):
-            name, val = f'{tag}{level}', round3(val)
-            self._writer.add_scalar(name, val, self._i_global)
-            postfix[name] = val
+        losses, metrics = [], []
+        for name, avg_val in avg_values.items():
+            postfix[name] = avg_val.avg
 
-        name, val = f'{tag}_total', np.mean(values)
-        self._writer.add_scalar(name, val, self._i_global)
-        postfix[name] = val
+            if 'loss' in name:
+                losses.append(avg_val.avg)
+
+            if 'acc' in name:
+                metrics.append(avg_val.avg)
+
+        postfix[f'{mode.s}/loss'] = np.mean(losses)
+        postfix[f'{mode.s}/acc'] = np.mean(metrics)
 
         return postfix
