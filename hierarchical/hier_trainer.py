@@ -90,36 +90,38 @@ class Trainer:
                 self._optimizer.zero_grad()
 
             for logits, enums, level in zip(logits_list, enums_arr, dataset.levels):
-                # loss
                 loss = self._cross_entropy(logits, enums.to(self._device))
+
+                # log loss
                 loss_tag, loss_v = f'{mode.s}/loss{level}', float(loss.detach().cpu())
                 avg_values[loss_tag].update(loss_v)
-                self._writer.add_scalar(loss_tag, loss_v, self._i_global)
 
-                # metric
-                acc = Calculator(preds=np.argmax(logits.detach().cpu().numpy(), axis=1),
-                                 probs=np.argmax(softmax(logits, dim=1).detach().cpu().numpy(), axis=1),
-                                 gts=enums.detach().cpu().numpy()
-                                 ).calc()['accuracy_weighted']
-                avg_values[f'{mode.s}/acc{level}'].update(acc)
+                # log metrics
+                calculator = Calculator(preds=np.argmax(logits.detach().cpu().numpy(), axis=1),
+                                        probs=np.argmax(softmax(logits, dim=1).detach().cpu().numpy(), axis=1),
+                                        gts=enums.detach().cpu().numpy())
+                acc_tag, acc_v = f'{mode.s}/acc{level}', calculator.calc()['accuracy_weighted']
+                avg_values[acc_tag].update(acc_v)
 
                 if mode == Mode.TRAIN:
+                    self._writer.add_scalar(loss_tag, loss_v, self._i_global)
                     loss.backward(retain_graph=True)
 
             if mode == Mode.TRAIN:
                 self._optimizer.step()
                 self._i_global += 1
 
-            loader_tqdm.set_postfix(self.make_postfix(avg_values, mode))
+            postfix = Trainer.make_postfix(avg_values, mode)
+            loader_tqdm.set_postfix(postfix)
 
         avg_acc_tag = f'{mode.s}/acc'
-        avg_acc = avg_values[avg_acc_tag].avg
+        avg_acc = postfix[avg_acc_tag]
         self._writer.add_scalar(avg_acc_tag, avg_acc, self._i_global)
 
         return avg_acc
 
     def train(self, n_epoch: int) -> None:
-        max_acc = 0
+        i_max, max_acc = 0, 0
         stopper = Stopper(n_obs=15, delta=0.005)
         scheduler = CosineAnnealingLR(self._optimizer, T_max=n_epoch, eta_min=1e-3)
 
@@ -127,16 +129,17 @@ class Trainer:
             logger.info(f'\nEpoch {i + 1} / {n_epoch}:')
 
             self.data_loop(Mode.TRAIN)
-            scheduler.step()
             self._writer.add_scalar('lr', scheduler.get_lr()[0], self._i_global)
+            scheduler.step()
 
             acc = self.data_loop(Mode.TEST)
-            max_acc = acc if acc > max_acc else max_acc
+            if acc > max_acc:
+                max_acc, i_max = acc, i
 
             stopper.update(acc)
             if stopper.check_criterion():
                 logger.info(f'Early stop by criterion. Reached {i} epoch of {n_epoch}')
-                logger.info(f'Resulted accuracy: {max_acc}')
+                logger.info(f'Resulted accuracy: {max_acc} [{i_max + 1} epoch.]')
                 break
 
     @staticmethod

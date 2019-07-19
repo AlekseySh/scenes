@@ -77,14 +77,14 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--data_root', dest='data_root', type=Path)
     parser.add_argument('--log_dir', dest='log_dir', type=Path)
 
-    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([0, 1, 2]))
+    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([0, 1]))
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
                         default=DataMode.CLASSIC_01, help=f'One from classic modes.')
 
     parser.add_argument('--n_epoch', dest='n_epoch', type=int, default=100)
     parser.add_argument('--aug_degree', dest='aug_degree', type=float, default=2.5)
 
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:0')
     parser.add_argument('--random_seed', dest='random_seed', type=int, default=42)
     return parser
 
