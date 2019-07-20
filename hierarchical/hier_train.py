@@ -77,7 +77,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--data_root', dest='data_root', type=Path)
     parser.add_argument('--log_dir', dest='log_dir', type=Path)
 
-    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([0, 2]))
+    parser.add_argument('--levels', dest='levels', type=Tuple[int, ...], default=tuple([0, 1, 2]))
     parser.add_argument('--data_mode', dest='data_mode', type=DataMode,
                         default=DataMode.CLASSIC_01, help=f'One from classic modes.')
 
