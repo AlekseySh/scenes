@@ -7,7 +7,8 @@ import pandas as pd
 from bidict import bidict
 
 __all__ = ['DataMode', 'load_data', 'get_sun_names',
-           'beutify_name', 'get_name_to_enum']
+           'beutify_name', 'get_name_to_enum',
+           'get_hierarchy_mappings']
 
 FILES_DIR = Path(__file__).parent / 'files'
 SPLITS_DIR = FILES_DIR / 'splits'
@@ -138,6 +139,11 @@ def get_sun_to_tags_mapping() -> Dict[str, str]:
         tag = 'other' if pd.isna(tag) else tag
         sun_to_tag.update({sun_class: tag})
     return sun_to_tag
+
+
+def get_hierarchy_mappings() -> List[Path]:
+    hier_dir = FILES_DIR / 'hierarchy'
+    return [hier_dir / 'level0.csv', hier_dir / 'level1.csv']
 
 
 # RANDOM

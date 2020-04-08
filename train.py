@@ -8,7 +8,7 @@ from typing import Tuple
 import torch
 
 from common import beutify_args, Stopper, fix_seed
-from datasets import ImagesDataset
+from dataset import ImagesDataset
 from network import Classifier
 from sun_data.utils import DataMode, load_data
 from trainer import Trainer
@@ -77,15 +77,15 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--visualize', dest='visualize', type=bool, default=False)
     parser.add_argument('--arch', dest='arch', type=str, default='resnet18')
     parser.add_argument('--pretrained', dest='pretrained', type=bool, default=True)
-    parser.add_argument('--optimizer', dest='optimizer', type=str, default='Adam')
-    parser.add_argument('--init_lr', dest='init_lr', type=float, default=1e-3)
-    parser.add_argument('--use_cosine_lr', dest='use_cosine_lr', type=bool, default=False)
+    parser.add_argument('--optimizer', dest='optimizer', type=str, default='SGD')
+    parser.add_argument('--init_lr', dest='init_lr', type=float, default=1e-1)
+    parser.add_argument('--use_cosine_lr', dest='use_cosine_lr', type=bool, default=True)
     parser.add_argument('--n_max_epoch', dest='n_max_epoch', type=int, default=50)
     parser.add_argument('--test_freq', dest='test_freq', type=int, default=1)
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=256)
     parser.add_argument('--n_tta', dest='n_tta', type=int, default=8)
     parser.add_argument('--n_workers', dest='n_workers', type=int, default=4)
-    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:2')
+    parser.add_argument('--device', dest='device', type=torch.device, default='cuda:3')
     parser.add_argument('--random_seed', dest='seed', type=int, default=42)
     parser.add_argument('--aug_degree', dest='aug_degree', type=float, default=2,
                         help='0 - turn off augmentations,'

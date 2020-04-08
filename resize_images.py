@@ -18,8 +18,8 @@ def resize_inplace(im_dir: Path, height: int, width: int) -> None:
 def get_parser() -> ArgumentParser:
     parser = argparse.ArgumentParser(description='Inplace image resizing.')
     parser.add_argument('--im_dir', dest='im_dir', type=Path)
-    parser.add_argument('--height', dest='height', type=int, default=512)
-    parser.add_argument('--width', dest='width', type=int, default=512)
+    parser.add_argument('--height', dest='height', type=int, default=256)
+    parser.add_argument('--width', dest='width', type=int, default=256)
     return parser
 
 

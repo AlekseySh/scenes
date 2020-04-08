@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from common import put_text_to_image
-from datasets import ImagesDataset
+from dataset import ImagesDataset
 from network import Classifier
 from sun_data.utils import get_name_to_enum, DataMode
 
