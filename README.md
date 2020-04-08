@@ -3,11 +3,12 @@
 Repository for solving problem of photo tagging (in social networks) using
 dataset for scene understanding task,
 [link to SUN dataset](https://vision.princeton.edu/projects/2010/SUN/).
-![](master_work/pic/Sun.png)
 
 
 Text of my master work (in `.pdf` format with sources) can be found in `master_work` subfolder.
 
+
+![](master_work/pic/Sun.png)
 
 Examples of correct predicts:
 ![](master_work/pic/correct_predict.png)
